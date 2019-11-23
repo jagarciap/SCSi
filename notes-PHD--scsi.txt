@@ -1,0 +1,50 @@
+2019_11_15.txt -PHD --scsi
+
+I will start to organize my code for the next meeting with Suzuki-sensei.
+> I want to start from the beginning using a tool to keep track of the changes (log file) and documenting everything, maintaining and organized workflow.
+
+----
+
+
+2019_11_17.txt -PHD --scsi
+
+The code must have the following characteristics/behaviours:
+> Functions declared in a .py file indicate the number of particles entering into the domain trough each particular cell. It also indicates the velocity of the particles. One function for each type of particle. It is important to take into account that the velocity of the particles is a resultant between the velocity due to solar wind, and the velocity due to the temperature of that particular species. The simulation itself must be completely detached from this .py file, just receiving the information from the aforementioned functions and not providing values to the file.
+> Outside boundaries are open boundaries. Every particle crossing any exterior boundary is deleted from the simulation. When calculating values in the nodes related to the particles a derivative = 0 approximation will be used. For example: velocity will be considered as the average velocity produced by the particles inside the cells involved in the calculation; density is calculated with the number of particles of such cells, and dividing by half of the usual volume computed for the rest of the cells.
+> Cartesian mesh is ok for now, but let's try to keep the code as generic as possible.
+> 2D is ok for now.
+> I will make the E field in every node an addition between the E-field calculated with the Poisson solver, i.e. the electric field created by the interaction of the Spacecraft with the enviroment, and an external electric field that can vary from node to node. In this first simulation the external E-field will be 0.
+> I highly doubt that any B-field created by the Spacecraft will become necessary to take into account at any stage of development of this code. So far, I will just add an external B-field with the same characteristic of the E-field above, being B = 0 for now.
+> About the inner boundary, the particles impinging into the Spacecraft will be deleted from the mesh. The function(s) that will handle this part will receive a function that decide the number of electrons or particles created due to the incoming particle. As such, the function(s) must receive an indetermined number of species, because ablation will be included later which would mean than several types of species might be created from this impinging effect.
+> The function mentioned above will make use of other function(s) that must register the current density of incoming and outcoming particles, of any species represented in the simulation. It might be passed to the previous function as an argument.
+> To prevent any future interest in analyzing particular phenomena related with electrons of different origins from being difficult, the program will keep all these electrons and particles that are identical but from different sources as different species (different classes in the program). This may be organized with implementation of abstract classes, with abstract classes representing particles that are physically different, and inside each abstract class, derived classes with same physical characteristics but with different origin. 
+> I think it is better to put the values of current densities in the nodes representing the Spacecraft as attributes of the classes. I should consider, in overall, putting anything related to particles in these classes. If I follow the same practice with electromagnetic fields and the rest of physical entities of importance in the simulation, I might be able to not need the 'world' class at all.
+> Abstract classes of different species of particles may derive from an abstract super-class called particle. Something like that may be done with electromagnetic fields. In general, it seems as a good practice to organize this code as an object-oriented program.
+
+----
+
+
+2019_11_23.txt -PHD --scsi
+
+> So, I am choosing Github as my repository for the code.
+> The name of the project will be: SCSi (Solar Corona - Spacecraft interaction).
+> At the end of each working session, I should update my computer's version and Github's repository version.
+> I will construct abstract classes with 'abc.py' module.
+
+>I will also save and keep updated the logfile "notes-PHD--scsi.txt" which is basically all the entries of this diary up to that day. The command is the following:
+2019_11_23.txt for i in 201*; do awk 'BEGIN{a = 0} /-PHD --scsi/ {a = 1; print FILENAME, $0; next} /\\endInput/ {if (a ==1) print RS; a = 0; next} {if (a ==1) print $0}' $i >> nodes-PHD--scsi.txt; done && cp nodes-PHD--scsi.txt /home/jorge/Documents/PHD/Simulations/SCSi
+
+----
+
+
+2019_11_23.txt -STOPIC --github -PHD --scsi
+
+> Differences between "fetch" and "pull": fectch just downloads the new changes into your local repository. pull, besides that, overwrite the new changes in your local files.
+> I am installing something called 'hub' that is a project that aims to wrap git and implements from command line usual actions of Github.
+> I am configuring Git for my project with 'git config':
+	git config --global user.name "Jorge Garcia"
+	git config --global user.email "jorge-02@hotmail.es"
+
+----
+
+
