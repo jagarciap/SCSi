@@ -30,9 +30,47 @@ The code must have the following characteristics/behaviours:
 > The name of the project will be: SCSi (Solar Corona - Spacecraft interaction).
 > At the end of each working session, I should update my computer's version and Github's repository version.
 > I will construct abstract classes with 'abc.py' module.
-
 >I will also save and keep updated the logfile "notes-PHD--scsi.txt" which is basically all the entries of this diary up to that day. The command is the following:
-2019_11_23.txt for i in 201*; do awk 'BEGIN{a = 0} /-PHD --scsi/ {a = 1; print FILENAME, $0; next} /\\endInput/ {if (a ==1) print RS; a = 0; next} {if (a ==1) print $0}' $i >> nodes-PHD--scsi.txt; done && cp nodes-PHD--scsi.txt /home/jorge/Documents/PHD/Simulations/SCSi
+2019_11_23.txt rm notes-PHD--scsi.txt && for i in 201*; do awk 'BEGIN{a = 0} /-PHD --scsi/ {a = 1; print FILENAME, $0; next} /\\endInput/ {if (a ==1) print RS; a = 0; next} {if (a ==1) print $0}' $i >> notes-PHD--scsi.txt; done && cp notes-PHD--scsi.txt /home/jorge/Documents/PHD/Simulations/SCSi
+> I am doing my class diagram with Inkscape following UML Class Diagram standards (I bookmarked a webpage that is very concise in explaining the standard).
+Source: https://www.visual-paradigm.com/guide/uml-unified-modeling-language/uml-class-diagram-tutorial/
+
+Construction of classes:
+
+Notes:
+> Mesh and PIC concrete classes (defined type of mesh and PIC) are closely linked. I do not want them to receive instatiation of the other so rather they will both import each other library, and will make use of the methods.
+> I still have to think if I will create a Point class, how to recognize boundaries, and where to put areas of boundary points (in order to calculate fluxes).
+> Also how to treat particles: Species? Just Particle class? Each particle as an object? Arrays of velocities and positions?
+
+Mesh (Abstract):
+
+Definition = Defines the type of mesh.
+Attributes:
+	+nPoints(int) = Number of points in the mesh.
+	+volumes([double]) = Volume of each node.
+	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC)
+Methods:
+	+getPosition(int i): (double x, double y) = For a given index return its real position.
+	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between particles).
+
+PIC (Abstract):
+
+Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
+Methods:
+	+scatter([(double x, double y)] positions, double value, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+	+gather([(double x, double y)] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+
+PIC_2D_rm1o (Inherits from PIC):
+
+Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementation).
+Methods:
+	+Implementation of PIC class methods.
+	+scatter_density = return densities of that species in every node of the mesh.
+	+scatter_velocity = return velocities of that species in every node of the mesh.
+	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
+
+
+
 
 ----
 
@@ -44,6 +82,12 @@ The code must have the following characteristics/behaviours:
 > I am configuring Git for my project with 'git config':
 	git config --global user.name "Jorge Garcia"
 	git config --global user.email "jorge-02@hotmail.es"
+> Workflow from computer to server (Github website):
+>> Work in my computer.
+>> 'git add *': Add every new file to the git local repository. Files are 'staged' (meaning they are registered in my local git repository.
+>> 'git commit -m "[Comment]"': Commit every staged file of my local repository.
+>> 'git push origin master': Exactly copies the new files and files changed to the destination repository, in this case 'origin', that is an alias for my remote repository in Github. 'Master' is the branch I am pushing.
+>> 'git pull origin master': Synchronizes (overwriting) branch 'master' of local repository with remote repository 'origin' ( My Github in my case).
 
 ----
 
