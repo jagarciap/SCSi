@@ -41,24 +41,45 @@ Notes:
 > Mesh and PIC concrete classes (defined type of mesh and PIC) are closely linked. I do not want them to receive instatiation of the other so rather they will both import each other library, and will make use of the methods.
 > I still have to think if I will create a Point class, how to recognize boundaries, and where to put areas of boundary points (in order to calculate fluxes).
 > Also how to treat particles: Species? Just Particle class? Each particle as an object? Arrays of velocities and positions?
+> Because it would be a waste of storage to keep points inside the Spacecraft, I think it is better to build the mesh between the inner and outer boundaries. Then I will create, for every different case of Spacecraft, a new file that will take care of the methods necessary to handle the inner boundary. I want to somehow detach this file and its methods from the methods that will take care of the physical phenomena. Something like this file provides the information whether a particle hit the spacecraft, but does not calculate the current nor deletes the particle. For the methods to handle outer boundaries, same standars will be applied to them. The outher boundary is closer linked to the mesh itself, but I will keep it as separate file to use the same logic as with inner boundaries. Then, every concrete mesh class will import the appropiate inner and outer boundary files, so that from outside, mesh objects can handle everything related to boundaries.
+> For the first simulation I will use as the spacecraft a 1m-side cube. Therefore, the artificial depth of my code will be 1m.
+> The First and outer boundaries will handle the information of the boundaries, which is why values such as nPoints, nx, ny and so on cannot be provided by the main program. They will be stored at a file called domain.py that will be imported by both boundary files.
 
-Mesh (Abstract):
+
+Mesh (Abstract)(Association between Mesh and PIC):
 
 Definition = Defines the type of mesh.
 Attributes:
-	+nPoints(int) = Number of points in the mesh.
-	+volumes([double]) = Volume of each node.
-	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC)
+	+nPoints (int) = Number of points in the mesh.
+	+volumes ([double]) = Volume of each node.
+	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
 Methods:
-	+getPosition(int i): (double x, double y) = For a given index return its real position.
+	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
+	+getPosition([int] i): [double, double y] = For a each index return its real position.
+	+getVolumes() = calculates the volume of each node and stores it in volumes attribute.
 	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between particles).
 
-PIC (Abstract):
+Mesh_2D_rm (Inherits from Mesh):
+
+Definition = Mesh class for a 2D rectangular mesh.
+Attributes:
+	+xmin (double) = Left limit of the domain (closest to the Sun).
+	+xmax (double) = Right limit of the domain (farthest from the Sun).
+	+ymin (double) = Bottom limit of the domain.
+	+ymax (double) = Top limit of the domain.
+	+depth (double) = Artificial thickness of the domain, to make it three-dimensional.
+	+nx (int) = Number of nodes in the x direction.
+	+ny (int) = Number of nodes in the y direction.
+Methods:
+	+Implementation of Mesh methods.
+
+
+PIC (Abstract)(Association between Mesh and PIC):
 
 Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
 Methods:
-	+scatter([(double x, double y)] positions, double value, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
-	+gather([(double x, double y)] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+	+scatter([double, double] positions, double value, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
 
 PIC_2D_rm1o (Inherits from PIC):
 
@@ -69,7 +90,70 @@ Methods:
 	+scatter_velocity = return velocities of that species in every node of the mesh.
 	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
 
+Species (Abstract):
 
+Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
+Attributes:
+	+q (double) = charge of the species.
+	+m (double) = mass of the species.
+	+q_over_m (double) = q/m.
+	+debye (double) = Debye length of the spcies.
+	+spwt (int) = specific weight of the species.
+	+max_n (int) = max. number of particles for the species.
+	+mesh_values (Particles_In_Mesh) = object to store anything related with the particles in the mesh.
+	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
+
+Proton (Inherits from Species):
+
+Definition = Species that take care of protons.
+Attributes:
+	+type (string) = some string descriptor that indicate the type/source of protons.
+	+Species attributes.
+
+Electron (Inherits from Species):
+
+Definition = Species that take care of electrons.
+Attributes:
+	+type (string) = some string descriptor that indicate the type/source of electrons.
+	+Species attributes.
+
+Ion (Inherits from Species):
+
+Definition = Species that take care of ions.
+Attributes:
+	+type (string) = some string descriptor that indicate the type of ion.
+	+Species attributes.
+
+Neutral (Inherits from Species):
+
+Definition = Species that take care of neutrals.
+Attributes:
+	+type (string) = some string descriptor that indicate the type of neutrals.
+	+Species attributes.
+
+Particles_In_Mesh (Abstract)(Composition with Species):
+
+Definition = Store values of distributions in the mesh related with particles. It wraps all the attributes that all particles must have.
+Attributes:
+	+nPoints (int) = Number of nodes in the mesh (Same as mesh class).
+	+density ([double]) = Density values at each node.
+	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
+
+Electrons_In_Mesh (Inherits from Particles_In_Mesh):
+
+Definition = Actual implementation of Particles_In_Mesh for electrons.
+Attributes:
+	+flux_spacecraft ([double]) = Perpendicular flux density of electrons going in (+) or out (-) of the spacecraft. The number of rows is the number of points compounding the mesh,
+									and each value represents the flux trough the line (area) next to the point (in ant-clockwise direction).
+	+Particles_In_Mesh attributes.
+
+Particles:
+
+Definition = Stores values related with the particles themselves. (
+Attributes:
+	+current_n (int) = current number of particles.
+	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
+	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
 
 
 ----
@@ -88,6 +172,13 @@ Methods:
 >> 'git commit -m "[Comment]"': Commit every staged file of my local repository.
 >> 'git push origin master': Exactly copies the new files and files changed to the destination repository, in this case 'origin', that is an alias for my remote repository in Github. 'Master' is the branch I am pushing.
 >> 'git pull origin master': Synchronizes (overwriting) branch 'master' of local repository with remote repository 'origin' ( My Github in my case).
+
+----
+
+
+2019_11_30.txt -PHD --scsi
+
+I have founnd a document that I put in the "Papers" folder of my "PhD" folder that explains how a Capacitance matrix is created. I have to think more about it, but I suppose the idea is to establish relative capacitances between every two nodes of the mesh and every node with respect to some ground, and then, using the charge in every node from the PIC step, calculate the voltages.
 
 ----
 
