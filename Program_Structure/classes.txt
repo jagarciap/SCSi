@@ -1,0 +1,117 @@
+## ---------------------------------------------------------------------------------------------------------------
+# This file will contain the workflow in the conceptual development of classes for the simulation
+# NOTE: The new additions and changes, as they occur, also have to be reported in the notes.
+## ---------------------------------------------------------------------------------------------------------------
+
+Mesh (Abstract)(Association between Mesh and PIC):
+
+Definition = Defines the type of mesh.
+Attributes:
+	+nPoints (int) = Number of points in the mesh.
+	+volumes ([double]) = Volume of each node.
+	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
+Methods:
+	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
+	+getPosition([int] i): [double, double y] = For a each index return its real position.
+	+getVolumes() = calculates the volume of each node and stores it in volumes attribute.
+	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between particles).
+
+Mesh_2D_rm (Inherits from Mesh):
+
+#Definition = Mesh class for a 2D rectangular mesh. The organization of the points will work as 0<=i<nx and 0<=j<ny. Also, for k parameter 0<=k<nPoints, k = nx*j+i.
+Attributes:
+	+xmin (double) = Left limit of the domain (closest to the Sun).
+	+xmax (double) = Right limit of the domain (farthest from the Sun).
+	+ymin (double) = Bottom limit of the domain.
+	+ymax (double) = Top limit of the domain.
+	+depth (double) = Artificial thickness of the domain, to make it three-dimensional.
+	+nx (int) = Number of nodes in the x direction.
+	+ny (int) = Number of nodes in the y direction.
+    +dx (float32) = Distance between adyacent horizontal nodes
+    +dy (float32) = Distance between adyacent vertical nodes
+	+Mesh class attributes.
+Methods:
+	+Implementation of Mesh methods.
+
+
+PIC (Abstract)(Association between Mesh and PIC):
+
+Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
+Methods:
+	+scatter([double, double] positions, double value, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+
+PIC_2D_rm1o (Inherits from PIC):
+
+Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementation).
+Methods:
+	+Implementation of PIC class methods.
+	+scatter_density = return densities of that species in every node of the mesh.
+	+scatter_velocity = return velocities of that species in every node of the mesh.
+	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
+
+Species (Abstract):
+
+Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
+Attributes:
+	+q (double) = charge of the species.
+	+m (double) = mass of the species.
+	+q_over_m (double) = q/m.
+	+debye (double) = Debye length of the spcies.
+	+spwt (int) = specific weight of the species.
+	+max_n (int) = max. number of particles for the species.
+	+mesh_values (Particles_In_Mesh) = object to store anything related with the particles in the mesh.
+	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
+
+Proton (Inherits from Species):
+
+Definition = Species that take care of protons.
+Attributes:
+	+type (string) = some string descriptor that indicate the type/source of protons.
+	+Species attributes.
+
+Electron (Inherits from Species):
+
+Definition = Species that take care of electrons.
+Attributes:
+	+type (string) = some string descriptor that indicate the type/source of electrons.
+	+Species attributes.
+
+Ion (Inherits from Species):
+
+Definition = Species that take care of ions.
+Attributes:
+	+type (string) = some string descriptor that indicate the type of ion.
+	+Species attributes.
+
+Neutral (Inherits from Species):
+
+Definition = Species that take care of neutrals.
+Attributes:
+	+type (string) = some string descriptor that indicate the type of neutrals.
+	+Species attributes.
+
+Particles_In_Mesh (Abstract)(Composition with Species):
+
+Definition = Store values of distributions in the mesh related with particles. It wraps all the attributes that all particles must have.
+Attributes:
+	+nPoints (int) = Number of nodes in the mesh (Same as mesh class).
+	+density ([double]) = Density values at each node.
+	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
+
+Electrons_In_Mesh (Inherits from Particles_In_Mesh):
+
+Definition = Actual implementation of Particles_In_Mesh for electrons.
+Attributes:
+	+flux_spacecraft ([double]) = Perpendicular flux density of electrons going in (+) or out (-) of the spacecraft. The number of rows is the number of points compounding the mesh,
+									and each value represents the flux trough the line (area) next to the point (in ant-clockwise direction).
+	+Particles_In_Mesh attributes.
+
+Particles:
+
+Definition = Stores values related with the particles themselves. (
+Attributes:
+	+current_n (int) = current number of particles.
+	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
+	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
+

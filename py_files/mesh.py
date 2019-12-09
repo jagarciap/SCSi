@@ -1,6 +1,10 @@
 #Data structures to hold domain information
 import numpy
-import constants as c
+import sys
+
+import Boundaries.outer_2D_rectangular as ob
+
+sys.path.append('../')
 
 #Mesh (Abstract)(Association between Mesh and PIC):
 #
@@ -34,7 +38,7 @@ class Mesh (object):
 
 #Mesh_2D_rm (Inherits from Mesh):
 #
-#Definition = Mesh class for a 2D rectangular mesh.
+#Definition = Mesh class for a 2D rectangular mesh. The organization of the points will work as 0<=i<nx and 0<=j<ny. Also, for k parameter 0<=k<nPoints, k = nx*j+i.
 #Attributes:
 #	+xmin (double) = Left limit of the domain (closest to the Sun).
 #	+xmax (double) = Right limit of the domain (farthest from the Sun).
@@ -43,11 +47,46 @@ class Mesh (object):
 #	+depth (double) = Artificial thickness of the domain, to make it three-dimensional.
 #	+nx (int) = Number of nodes in the x direction.
 #	+ny (int) = Number of nodes in the y direction.
+#       +dx (float32) = Distance between adyacent horizontal nodes
+#       +dy (float32) = Distance between adyacent vertical nodes
 #Methods:
 #	+Implementation of Mesh methods.
 class Mesh_2D_rm (Mesh):
     def __init__(self, pic_object):
-        self.
+        self.pic = pic_object
+
+        # Variables that are declared here
+        self.nx = numpy.int8(40)
+        self.ny = numpy.int8(40)
+        self.depth = 1.0
+
+        self.nPoints = numpy.int16(self.nx*self.ny)
+        self.xmin = ob.x_min
+        self.xmax = ob.x_max
+        self.ymin = ob.y_min
+        self.ymax = ob.y_max
+        self.dx = (xmax-xmin)/(self.nx-1)
+        self.dy = (ymax-ymin)/(self.ny-1)
+        self.setDomain()
+
+    def setDomain(self):
+#	+nPoints (int) = Number of points in the mesh.
+#	+volumes ([double]) = Volume of each node.
+#	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
+        self.volumes = (dx*dy*depth)*numpy.ones((nPoints), dtype = 'numpy.float32')
+        self.volumes[:nx] /= 2
+        self.volumes[nx*(ny-1):] /= 2
+        self.volumes[(nx-1)::nx] /= 2
+        self.volumes[:nx*(ny-1):nx] /= 2
+
+    def getPosition(self, ind):
+        pass
+
+    def getVolumes(self):
+        pass
+
+    def print(self):
+        pass
 
 
 class Domain(object):

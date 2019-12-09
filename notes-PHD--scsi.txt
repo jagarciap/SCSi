@@ -178,7 +178,38 @@ Attributes:
 
 2019_11_30.txt -PHD --scsi
 
-I have founnd a document that I put in the "Papers" folder of my "PhD" folder that explains how a Capacitance matrix is created. I have to think more about it, but I suppose the idea is to establish relative capacitances between every two nodes of the mesh and every node with respect to some ground, and then, using the charge in every node from the PIC step, calculate the voltages.
+I have founnd a document that I put in the "Papers" folder of my "PhD" folder that explains how a Capacitance matrix is created. I have to think more about it, but I suppose the idea is to establish relative capacitances between every two nodes of the mesh and every node with respect to some ground, and then, using the charge in every node from the PIC step, calculate the voltages. Actually, the paper "2009_Evaluation of Electric Field Probe Onboard Spacecraft using a 3D PIC Simulation" and the book "1985_Plasma Physics via Computer Simulation_Birdsall-Langdon" both referred to the book "Computer simulation using particles / R.W. Hockney and J.W. Eastwood" when mentioning this Capacitance Matrix method. There are several copies in UTokyo so I will go on Monday to get one.
+
+----
+
+
+2019_12_02.txt -PHD --scsi
+
+> Capacitance Matrix: So, what is the idea? The charge at any point in the spacecraft is the integral of net current to the spacecraft in from t=0 to that moment. Then, by using \vec{V} = C^{-1}\vec{Q} with \vec{Q} the charges in the nodes of of the spacecraft, V can be obtained for the same nodes.
+> Another idea, called immersed boundary, is to put sufficiently large permittivities in the nodes representing the spacecraft. Using finite \rho, but "almost infinite" \epsilon, makes \nabla\phi almost vanishing, which is the intention for a conducting material.
+> The conclussion of the day regarding this topic is: Calculate the charge accumulation at the nodes as mention in the first item. Probably, after each iteration, I should redistribute the charge in a way that makes the potential equal to zero. Then, in next iteration, use this previous charge in each node, plus current*timestep. Now, having this and knowing the C^{-1}, V can be calculated. which will be v_{sc}*\vec{1}. As such, the only part remaining is to find the capacity matrix. For this I have to solve the problem of finding the potential for a square at fixed potential as inner boundary, and infinite as outer boundary. I think is viable to make \phi = X(x)Z(z) and work with one quarter of the space. The potential in the diagonal boundary has to satisfy that \vec{E} perpendicular to the diagonal equals 0. Obviously, the other two boundaries are V(sc) = v_{sc} and v(\infty) = 0. Then, using Gauss law in the spacecraft, find v_{sc} such that the charge is 1. After this, make \frac{d\phi}{dz} to find the charge density and thus store the values of how a total charge Q is redistributed throughout the surface of the spacecraft.
+
+----
+
+
+2019_12_09.txt -PHD --scsi -MAESTRIA --transitorio_1D
+
+> I can use the computer in front of the table and the MacPro one. For both of them I should check if I will interrupt or somehow affect other people's code and ask for permission.
+> In the computer in fron of the table I will use Conda to run the code. Commands to use Conda:
+>> conda activate jorge
+>> conda deactivate
+
+> So far, the code in /home/jorge/Documents/Instituto_Balseiro/Documentos_Maestria/Simulaciones/Preliminary_Version/source_FifeThruster is working. I will copy that version into Hayabusa 3. I also updated the error of the energy term Jj in the Dropbox folder. I corrected the (+) to (-) in the exponential term in ionization.
+> I put my Master's code into Github. I have to ask Daniel about privacy issues, but in general I want to keep stored a version of the code that works, alongside my thesis and some other documents.
+
+> The code will be working with mks system, at least for now.
+> The constants of the mesh not related to the boundaries are directly written in the init function of the class.
+> Addition to mesh_2D_rm:
+Definition = Mesh class for a 2D rectangular mesh. The organization of the points will work as 0<=i<nx and 0<=j<ny. Also, for k parameter 0<=k<nPoints, k = nx*j+i.
+#       +dx (float32) = Distance between adyacent horizontal nodes
+#       +dy (float32) = Distance between adyacent vertical nodes
+
+
 
 ----
 
