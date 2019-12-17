@@ -1,10 +1,12 @@
 #Data structures to hold domain information
+import copy
 import numpy
-import sys
+import os
+
+import evtk.hl as vtk
 
 import Boundaries.outer_2D_rectangular as ob
-
-sys.path.append('../')
+import pic
 
 #Mesh (Abstract)(Association between Mesh and PIC):
 #
@@ -16,8 +18,9 @@ sys.path.append('../')
 #Methods:
 #       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.
-#	+getVolumes() = calculates the volume of each node and stores it in volumes attribute.
-#	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between particles).
+#	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
+#           depending on the actual type of mesh subclass used.
+#	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 class Mesh (object):
     def __init__(self, pic_object):
         self.pic = pic_object
@@ -29,7 +32,7 @@ class Mesh (object):
     def getPosition(self, ind):
         pass
 
-    def getVolumes(self):
+    def getIndex(self, pos):
         pass
 
     def print(self):
@@ -56,37 +59,51 @@ class Mesh_2D_rm (Mesh):
         self.pic = pic_object
 
         # Variables that are declared here
-        self.nx = numpy.int8(40)
-        self.ny = numpy.int8(40)
+        self.nx = numpy.uint16(40)
+        self.ny = numpy.uint16(40)
         self.depth = 1.0
 
-        self.nPoints = numpy.int16(self.nx*self.ny)
         self.xmin = ob.x_min
         self.xmax = ob.x_max
         self.ymin = ob.y_min
         self.ymax = ob.y_max
-        self.dx = (xmax-xmin)/(self.nx-1)
-        self.dy = (ymax-ymin)/(self.ny-1)
+        self.dx = (self.xmax-self.xmin)/(self.nx-1)
+        self.dy = (self.ymax-self.ymin)/(self.ny-1)
         self.setDomain()
 
+#       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
     def setDomain(self):
-#	+nPoints (int) = Number of points in the mesh.
-#	+volumes ([double]) = Volume of each node.
-#	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
-        self.volumes = (dx*dy*depth)*numpy.ones((nPoints), dtype = 'numpy.float32')
-        self.volumes[:nx] /= 2
-        self.volumes[nx*(ny-1):] /= 2
-        self.volumes[(nx-1)::nx] /= 2
-        self.volumes[:nx*(ny-1):nx] /= 2
+        self.nPoints = numpy.uint16(self.nx*self.ny)
+        self.volumes = (self.dx*self.dy*self.depth)*numpy.ones((self.nPoints), dtype = 'float32')
+        self.volumes[:self.nx] /= 2
+        self.volumes[self.nx*(self.ny-1):] /= 2
+        self.volumes[(self.nx-1)::self.nx] /= 2
+        self.volumes[:self.nx*self.ny-1:self.nx] /= 2
 
+#	+getPosition([int] i): [double, double y] = For a each index return its real position.
     def getPosition(self, ind):
-        pass
+        j, i = numpy.divmod(ind, self.ny)
+        return numpy.append(self.xmin+self.dx*i[:,None], self.ymin+self.dy*j[:,None], axis = 1)
 
-    def getVolumes(self):
-        pass
+#	+getIndex([double,double] pos): [double,double] = For each real position returns its index value.
+    def getIndex(self, pos):
+        indexes = numpy.zeros(numpy.shape(pos)[0],2)
+        indexes[:,0] = (pos[:,0]-self.xmin)/self.dx
+        indexes[:,1] = (pos[:,1]-self.ymin)/self.dy
+        return indexes
 
+#	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
     def print(self):
-        pass
+        i = numpy.arange(0, self.nx, dtype ='int16')
+        j = numpy.arange(0, self.ny, dtype ='int16')
+        ind = numpy.arange(0, self.nPoints, dtype = 'uint16')
+        pos = self.getPosition(ind)
+        temp = numpy.zeros((1), dtype = 'int16')
+
+        cwd = os.path.split(os.getcwd())[0]
+        vtkstring = cwd+'/results/mesh'
+        vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.volumes.reshape((self.nx, self.ny, 1), order = 'F'),
+                'positions': (numpy.reshape(copy.copy(pos[:,0]),(self.nx,self.ny,1), order = 'F'), numpy.reshape(copy.copy(pos[:,1]),(self.nx,self.ny,1), order = 'F'), numpy.zeros((self.nx,self.ny,1)))})
 
 
 class Domain(object):

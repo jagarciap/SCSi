@@ -1,5 +1,32 @@
+#Data structures that contain PIC numerical methods
 import numpy
 import constants as c
+
+#PIC (Abstract)(Association between Mesh and PIC):
+#
+#Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
+#Methods:
+#	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+#	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+class PIC (object):
+    def scatter(self, positions, values, field):
+        pass
+
+    def gather(self, positions, field):
+        pass
+
+
+#PIC_2D_rm1o (Inherits from PIC):
+#
+#Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementation).
+#Methods:
+#	+Implementation of PIC class methods.
+#	+scatter_density = return densities of that species in every node of the mesh.
+#	+scatter_velocity = return velocities of that species in every node of the mesh.
+#	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
+class PIC_2D_rm1o(PIC):
+    string = "PIC method for a rectangular 2D mesh, making interpolations at first order"
+
 
 def scatter_opt(lc, value, field):
     lc = lc[numpy.logical_and(lc[:,0]>0,lc[:,1]>0),:]

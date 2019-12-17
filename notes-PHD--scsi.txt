@@ -214,3 +214,25 @@ Definition = Mesh class for a 2D rectangular mesh. The organization of the point
 ----
 
 
+2019_12_12.txt -PHD --scsi -STOPIC --python
+
+> After deliberating for a bit, I have decided to maintain all the classes' codes with self. I think it is clearer to read it that way afterwards and reduces the probability of coding errores related with differentiating when to declare variables and functions as class or instance attributes. I show the discussion below:
+"So far I am using 'self' to define the attributes inside the classes. That means that the attribute is considered as an instance attribute rather than a class attribute. Same with functions define with 'self' as first argument. For now I will stop using 'self' in the classes that will be instanced just once, since I am adding this four additional letters unnecessarilly each time. Maybe in the future I can start using, for example, different PIC techniques for different parts of the domain, or a mesh that is a combination of different meshes. In those cases I might be instantiating multiple times the same class, and I will need then to change the code. I will stop using self for variables and I will declare them in the class scope. However, methods will still include 'self' since otherwise, to be part of the class, 'self' has to be replaced by 'cls', and it goes through more work since class methods then possibly cannot be called as instance.function_name()"
+
+> New addition to Mesh class:
+#	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
+#           depending on the actual type of mesh subclass used.
+Also, now it's not necessary to use getVolumes() so it was deleted.
+
+----
+
+
+2019_12_17.txt -PHD --scsi
+
+> Now the classes Mesh and Mesh_2D_rm work! I printed the mesh in paraview and everything is working as expected: volumes and coordinates.
+> Correction in PIC class:
+#	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+
+----
+
+

@@ -13,8 +13,9 @@ Attributes:
 Methods:
 	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
 	+getPosition([int] i): [double, double y] = For a each index return its real position.
-	+getVolumes() = calculates the volume of each node and stores it in volumes attribute.
-	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between particles).
+	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
+           depending on the actual type of mesh subclass used.
+#	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 
 Mesh_2D_rm (Inherits from Mesh):
 
@@ -38,7 +39,7 @@ PIC (Abstract)(Association between Mesh and PIC):
 
 Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
 Methods:
-	+scatter([double, double] positions, double value, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
+	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
 	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
 
 PIC_2D_rm1o (Inherits from PIC):
