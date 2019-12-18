@@ -6,7 +6,6 @@ import os
 import evtk.hl as vtk
 
 import Boundaries.outer_2D_rectangular as ob
-import pic
 
 #Mesh (Abstract)(Association between Mesh and PIC):
 #
@@ -14,16 +13,16 @@ import pic
 #Attributes:
 #	+nPoints (int) = Number of points in the mesh.
 #	+volumes ([double]) = Volume of each node.
-#	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
 #Methods:
 #       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.
 #	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
 #           depending on the actual type of mesh subclass used.
+#	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
+#	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 class Mesh (object):
-    def __init__(self, pic_object):
-        self.pic = pic_object
+    def __init__(self):
         setDomain()
 
     def setDomain(self):
@@ -33,6 +32,12 @@ class Mesh (object):
         pass
 
     def getIndex(self, pos):
+        pass
+
+    def arrayToIndex(self, array):
+        pass
+
+    def indexToArray(self, ind):
         pass
 
     def print(self):
@@ -55,9 +60,7 @@ class Mesh (object):
 #Methods:
 #	+Implementation of Mesh methods.
 class Mesh_2D_rm (Mesh):
-    def __init__(self, pic_object):
-        self.pic = pic_object
-
+    def __init__(self):
         # Variables that are declared here
         self.nx = numpy.uint16(40)
         self.ny = numpy.uint16(40)
@@ -82,8 +85,8 @@ class Mesh_2D_rm (Mesh):
 
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.
     def getPosition(self, ind):
-        j, i = numpy.divmod(ind, self.ny)
-        return numpy.append(self.xmin+self.dx*i[:,None], self.ymin+self.dy*j[:,None], axis = 1)
+        index2D = self.arrayToIndex(ind)
+        return numpy.append(self.xmin+self.dx*index2D[:,0][:,None], self.ymin+self.dy*index2D[:,1][:,None], axis = 1)
 
 #	+getIndex([double,double] pos): [double,double] = For each real position returns its index value.
     def getIndex(self, pos):
@@ -91,6 +94,15 @@ class Mesh_2D_rm (Mesh):
         indexes[:,0] = (pos[:,0]-self.xmin)/self.dx
         indexes[:,1] = (pos[:,1]-self.ymin)/self.dy
         return indexes
+
+#	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
+    def arrayToIndex(self, array):
+        j, i = numpy.divmod(array, self.ny)
+        return numpy.append(i[:,None], j[:,None], axis = 1)
+
+#	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
+    def indexToArray(self, ind):
+        return ind[:,1]*self.nx+ind[:,0]
 
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
     def print(self):
@@ -102,7 +114,7 @@ class Mesh_2D_rm (Mesh):
 
         cwd = os.path.split(os.getcwd())[0]
         vtkstring = cwd+'/results/mesh'
-        vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.volumes.reshape((self.nx, self.ny, 1), order = 'F'),
+        vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.volumes.reshape((self.nx, self.ny, 1), order = 'F'),\
                 'positions': (numpy.reshape(copy.copy(pos[:,0]),(self.nx,self.ny,1), order = 'F'), numpy.reshape(copy.copy(pos[:,1]),(self.nx,self.ny,1), order = 'F'), numpy.zeros((self.nx,self.ny,1)))})
 
 

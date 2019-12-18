@@ -1,14 +1,22 @@
 #Data structures that contain PIC numerical methods
 import numpy
+
 import constants as c
+import mesh as m
 
 #PIC (Abstract)(Association between Mesh and PIC):
 #
 #Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
+#Attributes:
+#	+mesh (Mesh) = Instance of the mesh class for later use of getIndex().
 #Methods:
 #	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
-#	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+#	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
+#                                                                                               The columns are the (x,y,z) positions
 class PIC (object):
+    def __init__(self, mesh):
+        self.mesh = mesh
+
     def scatter(self, positions, values, field):
         pass
 
@@ -19,99 +27,93 @@ class PIC (object):
 #PIC_2D_rm1o (Inherits from PIC):
 #
 #Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementation).
+#Attributes:
+#	+PIC class attributes.
 #Methods:
 #	+Implementation of PIC class methods.
-#	+scatter_density = return densities of that species in every node of the mesh.
-#	+scatter_velocity = return velocities of that species in every node of the mesh.
-#	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
+#	+scatterDensity (Species) = return densities of that species in every node of the mesh.
+#	+scatterVelocity (Species) = return velocities of that species in every node of the mesh.
+#	+scatterFlux = return flux of particles of that species into every indicated node (not all the mesh).
 class PIC_2D_rm1o(PIC):
+
     string = "PIC method for a rectangular 2D mesh, making interpolations at first order"
 
+    def __init__(self, mesh):
+        super(PIC_2D_rm1o, self).__init__(mesh)
 
-def scatter_opt(lc, value, field):
-    lc = lc[numpy.logical_and(lc[:,0]>0,lc[:,1]>0),:]
-    i = lc[:,0].astype(int)
-    j = lc[:,1].astype(int)
-    di = lc[:,0] - i
-    dj = lc[:,1] - j
+    def scatter(self, positions, values, field):
+        #Getting mesh coordinates
+        mc = self.mesh.getIndex(positions)
+        
+        index = mc.astype(int)
+        #i = index[:,0].astype(int)
+        #j = index[:,1].astype(int)
+        array = self.mesh.indexToArray(index)
+        di = mc[:,0] - index[:,0]
+        dj = mc[:,1] - index[:,1]
+        
+        #base = numpy.logical_and(index[:,0] < nx, index[:,1] < ny)
+        #ind0 = numpy.flatnonzero(base)
+        #indx = numpy.flatnonzero(numpy.logical_and(index[:,0]+1 < nx, base))
+        #indy = numpy.flatnonzero(numpy.logical_and(index[:,1]+1 < ny, base))
+        #indxy = numpy.flatnonzero(numpy.logical_and(index[:,0]+1 < nx, index[:,1]+1 < ny))
+
+        #numpy.add.at(field, array[ind0], (1-di[ind0])*(1-dj[ind0])*value[ind0])
+        #numpy.add.at(field, (i[indx]+1,j[indx]), di[indx]*(1-dj[indx])*value[indx])
+        #numpy.add.at(field, (i[indy], j[indy]+1), (1-di[indy])*dj[indy]*value[indy])
+        #numpy.add.at(field, (i[indxy]+1, j[indxy]+1), di[indxy]*dj[indxy]*value[indxy])
+
+        numpy.add.at(field, array, (1-di)*(1-dj)*value)
+        numpy.add.at(field, array+1, di*(1-dj)*value)
+        numpy.add.at(field, array+self.mesh.nx, (1-di)*dj*value)
+        numpy.add.at(field, array+self.mesh.nx+1, di*dj*value)
+
+#       +scatterDensity (Species) = return densities of that species in every node of the mesh.
+    def scatterDensity(self, species):
+        #reset the density
+        species.mesh_values.density *= 0
     
-    nx, ny = numpy.shape(field)
-    base = numpy.logical_and(i < nx, j < ny)
-    ind0 = numpy.flatnonzero(base)
-    indx = numpy.flatnonzero(numpy.logical_and(i+1 < nx, base))
-    indy = numpy.flatnonzero(numpy.logical_and(j+1 < ny,base))
-    indxy = numpy.flatnonzero(numpy.logical_and(i+1 < nx, j+1 < ny))
-
-    numpy.add.at(field, (i[ind0],j[ind0]),(1-di[ind0])*(1-dj[ind0])*value[ind0])
-    numpy.add.at(field, (i[indx]+1,j[indx]), di[indx]*(1-dj[indx])*value[indx])
-    numpy.add.at(field, (i[indy], j[indy]+1), (1-di[indy])*dj[indy]*value[indy])
-    numpy.add.at(field, (i[indxy]+1, j[indxy]+1), di[indxy]*dj[indxy]*value[indxy])
-
-def ScatterSpecies (world,species,field):
-    zmin = world.zmin
-    rmin = world.rmin
-    dz = world.dz
-    dr = world.dr
-    np = species.np
-
-    data = species.part.x[:np,:]
+        #scatter particles to the mesh
+        self.scatter(species.part_values.position[:species.part_values.current_n], species.spwt, species.mesh_values.density)
+        
+        #divide by cell volume
+        field /= self.mesh.volumes
     
-    lc = numpy.zeros_like(data)
-    lc[:,0] = (data[:,0]-zmin)/dz
-    lc[:,1] = (data[:,1]-rmin)/dr
-
-
-    field*=0
-   
-    #scatter particles to the mesh
-    scatter_opt(lc, species.spwt*numpy.ones((np)),field)
+#       +scatterVelocity (Species) = return velocities of that species in every node of the mesh.
+    def scatterSpeed(self, species):
+        #reset the velocity
+        species.mesh_values.velocity *= 0
     
-    #divide by cell volume
-    field/=world.node_volume
-    print(numpy.max(field))
-
-def ScatterSpeed (world,species,field):
-    zmin = world.zmin
-    rmin = world.rmin
-    dz = world.dz
-    dr = world.dr
-    np = species.np
-
-    data = species.part.x[:np,:]
+        #scatter particles to the mesh
+        for dim in numpy.shape(species.part_values.velocity.shape)[1]:
+            self.scatter(species.part_values.position[:species.part_values.current_n], \
+                    species.part_values.velocity[:species.part_values.current_n,dim], species.mesh_values.velocity[:,dim])
+        
+        #Divide by number of particles
+        species.part_values.velocity *= numpy.where(species.mesh_values.density == 0, 0, species.spwt/species.mesh_values.density/self.mesh.volumes)
     
-    lc = numpy.zeros_like(data)
-    lc[:,0] = (data[:,0]-zmin)/dz
-    lc[:,1] = (data[:,1]-rmin)/dr
-
-    field*=0
+#       +scatterFlux = return flux of particles of that species into every indicated node (not all the mesh).
+    def scatterFlux(self):
+        pass
     
-    #scatter particles to the mesh
-    for dim in range(2):
-        scatter_opt(lc, species.part.v[:np,dim],field[dim])
     
-    if species.charge == -c.QE:
-        field*=numpy.where(world.ndi==0,0,species.spwt/world.ndi/world.node_volume)
-    elif species.charge == c.QE:
-        field*=numpy.where(world.nde==0,0,species.spwt/world.nde/world.node_volume)
-    
-def gather_opt(data,lc):
-    i = lc[:,0].astype(int)
-    j = lc[:,1].astype(int)
-    di = lc[:,0] - i
-    dj = lc[:,1] - j
+#	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
+#                                                                                               The columns are the (x,y,z) positions
+    def gather(self, positions, field):
+        #Getting mesh coordinates
+        mc = self.mesh.getIndex(positions)
+        #Creating the array
+        values = numpy.zeros((numpy.shape(positions)[0], numpy.shape(field)[1]))
+        
+        index = mc.astype(int)
+        array = self.mesh.indexToArray(index)
+        di = mc[:,0] - index[:,0]
+        dj = mc[:,1] - index[:,1]
 
-    n = numpy.shape(i)[0]
-    nx, ny = numpy.shape(data)
-    base = numpy.logical_and(i < nx, j < ny)
-    ind0 = numpy.flatnonzero(base)
-    indx = numpy.flatnonzero(numpy.logical_and(i+1 < nx, base))
-    indy = numpy.flatnonzero(numpy.logical_and(j+1 < ny,base))
-    indxy = numpy.flatnonzero(numpy.logical_and(i+1 < nx, j+1 < ny))
+        #From mesh to particles, summing in every dimension through different columns
+        values += field[array,:]*(1-di)*(1-dj)
+        values += field[array+1,:]*di*(1-dj)
+        values += field[array+self.mesh.nx,:]*(1-di)*dj
+        values += field[array+self.mesh.nx+1,:]*di*dj
 
-    a = numpy.zeros((n))
-    numpy.add.at(a, ind0, data[i[ind0],j[ind0]]*(1-di[ind0])*(1-dj[ind0]))
-    numpy.add.at(a, indx, data[i[indx]+1,j[indx]]*di[indx]*(1-dj[indx]))
-    numpy.add.at(a, indy, data[i[indy],j[indy]+1]*(1-di[indy])*dj[indy])
-    numpy.add.at(a, indxy, data[i[indxy]+1,j[indxy]+1]*di[indxy]*dj[indxy])
-
-    return a
+        return values

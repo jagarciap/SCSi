@@ -9,13 +9,14 @@ Definition = Defines the type of mesh.
 Attributes:
 	+nPoints (int) = Number of points in the mesh.
 	+volumes ([double]) = Volume of each node.
-	+pic (PIC) = Object that provides pic methods (Association between Mesh and PIC).
 Methods:
 	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
 	+getPosition([int] i): [double, double y] = For a each index return its real position.
 	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
            depending on the actual type of mesh subclass used.
-#	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
+	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
+	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
+	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 
 Mesh_2D_rm (Inherits from Mesh):
 
@@ -38,18 +39,24 @@ Methods:
 PIC (Abstract)(Association between Mesh and PIC):
 
 Definition = Indicate the methods that all PIC classes have to implement. Each PIC concrete class will depend on the type of mesh, as well as the type of PIC algorithm implemented.
+Attributes:
+	+mesh (Mesh) = Instance of the mesh class for later use of getIndex().
 Methods:
 	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
-	+gather([double, double] positions, [double] field): [double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions, called field_p.
+	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
+                                                                                               The columns are the (x,y,z) positions
 
 PIC_2D_rm1o (Inherits from PIC):
 
 Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementation).
+Attributes:
+	+PIC class attributes.
 Methods:
 	+Implementation of PIC class methods.
-	+scatter_density = return densities of that species in every node of the mesh.
-	+scatter_velocity = return velocities of that species in every node of the mesh.
+	+scatterDensity (Species) = return densities of that species in every node of the mesh.
+	+scatterVelocity (Species) = return velocities of that species in every node of the mesh.
 	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
+	+scatter_velocity = return velocities of that species in every node of the mesh.
 
 Species (Abstract):
 
@@ -60,9 +67,12 @@ Attributes:
 	+q_over_m (double) = q/m.
 	+debye (double) = Debye length of the spcies.
 	+spwt (int) = specific weight of the species.
-	+max_n (int) = max. number of particles for the species.
+    +pos_dim (int) = number of components of position
+    +vel_dim(int) = number of components of the velocity
 	+mesh_values (Particles_In_Mesh) = object to store anything related with the particles in the mesh.
 	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
+Notes:
+       +__init__() also receives nPoints from mesh
 
 Proton (Inherits from Species):
 
@@ -110,9 +120,10 @@ Attributes:
 
 Particles:
 
-Definition = Stores values related with the particles themselves. (
+Definition = Stores values related with the particles themselves.
 Attributes:
 	+current_n (int) = current number of particles.
+	+max_n (int) = max. number of particles for the species.
 	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
 	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
 

@@ -1,7 +1,7 @@
 import mesh
+import pic
+import species
 
-class PIC(object):
-    pass
-
-new_mesh = mesh.Mesh_2D_rm (PIC())
+new_mesh = mesh.Mesh_2D_rm()
+new_PIC = pic.PIC_2D_rm1o(new_mesh)
 new_mesh.print()
