@@ -1,7 +1,6 @@
 #Data structures that contain PIC numerical methods
 import numpy
 
-import constants as c
 import mesh as m
 
 #PIC (Abstract)(Association between Mesh and PIC):

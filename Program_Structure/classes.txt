@@ -8,15 +8,18 @@ Mesh (Abstract)(Association between Mesh and PIC):
 Definition = Defines the type of mesh.
 Attributes:
 	+nPoints (int) = Number of points in the mesh.
+	+boundaries ([Boundary]) = List of different boundaries that define the mesh.
 	+volumes ([double]) = Volume of each node.
 Methods:
-	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
+	+setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints, boundaries and any other subclass variable.
 	+getPosition([int] i): [double, double y] = For a each index return its real position.
 	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
            depending on the actual type of mesh subclass used.
 	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
 	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
 	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
+
+--------------------------------------------
 
 Mesh_2D_rm (Inherits from Mesh):
 
@@ -31,10 +34,12 @@ Attributes:
 	+ny (int) = Number of nodes in the y direction.
     +dx (float32) = Distance between adyacent horizontal nodes
     +dy (float32) = Distance between adyacent vertical nodes
+	+boundaries ([Boundary]) = It is [Outer_2D_Rectangular].
 	+Mesh class attributes.
 Methods:
 	+Implementation of Mesh methods.
 
+---------------------------------------------------------------------------------------------------------------------------------------
 
 PIC (Abstract)(Association between Mesh and PIC):
 
@@ -45,6 +50,8 @@ Methods:
 	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
 	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
                                                                                                The columns are the (x,y,z) positions
+
+--------------------------------------------
 
 PIC_2D_rm1o (Inherits from PIC):
 
@@ -57,6 +64,8 @@ Methods:
 	+scatterVelocity (Species) = return velocities of that species in every node of the mesh.
 	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
 	+scatter_velocity = return velocities of that species in every node of the mesh.
+
+---------------------------------------------------------------------------------------------------------------------------------------
 
 Species (Abstract):
 
@@ -74,12 +83,16 @@ Attributes:
 Notes:
        +__init__() also receives nPoints from mesh
 
+--------------------------------------------
+
 Proton (Inherits from Species):
 
 Definition = Species that take care of protons.
 Attributes:
 	+type (string) = some string descriptor that indicate the type/source of protons.
 	+Species attributes.
+
+--------------------------------------------
 
 Electron (Inherits from Species):
 
@@ -88,12 +101,16 @@ Attributes:
 	+type (string) = some string descriptor that indicate the type/source of electrons.
 	+Species attributes.
 
+--------------------------------------------
+
 Ion (Inherits from Species):
 
 Definition = Species that take care of ions.
 Attributes:
 	+type (string) = some string descriptor that indicate the type of ion.
 	+Species attributes.
+
+--------------------------------------------
 
 Neutral (Inherits from Species):
 
@@ -102,6 +119,8 @@ Attributes:
 	+type (string) = some string descriptor that indicate the type of neutrals.
 	+Species attributes.
 
+--------------------------------------------
+
 Particles_In_Mesh (Abstract)(Composition with Species):
 
 Definition = Store values of distributions in the mesh related with particles. It wraps all the attributes that all particles must have.
@@ -109,6 +128,9 @@ Attributes:
 	+nPoints (int) = Number of nodes in the mesh (Same as mesh class).
 	+density ([double]) = Density values at each node.
 	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
+	+residuals([double]) = remnants from injection of particles at the previous step.
+
+--------------------------------------------
 
 Electrons_In_Mesh (Inherits from Particles_In_Mesh):
 
@@ -117,6 +139,8 @@ Attributes:
 	+flux_spacecraft ([double]) = Perpendicular flux density of electrons going in (+) or out (-) of the spacecraft. The number of rows is the number of points compounding the mesh,
 									and each value represents the flux trough the line (area) next to the point (in ant-clockwise direction).
 	+Particles_In_Mesh attributes.
+
+--------------------------------------------
 
 Particles:
 
@@ -127,3 +151,67 @@ Attributes:
 	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
 	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
 
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Field (Abstract):
+
+Definition = Indicate the attributes and methods that all fields have to implement. The fields obtain the functions to compute the fields from 'solver.py'
+Attributes:
+	+pic (PIC) = Class that contains PIC methods.
+	+boundaries (Fields_Boundary) = Class that represents the methods which apply boundaries to the fields.
+	+nPoints (int) = number of nodes in the mesh (Same as mesh class).
+	+field ([double, double]) = components (columns) of field at each node.
+Methods:
+	+computeField(...) = Computes the updated field values
+	+fieldAtParticles(...) [double,double] = return an array indicating by component (columns) and particles (rows) the field.
+
+--------------------------------------------
+
+Electric_Field (Inherits from Field):
+
+Definition = Electric field
+Attributes:
+	+type (string) = some string that describes the source of the electric field (created by the interaction plasma-spacecraft, user-defined, constant, etc.)
+	+potential ([double]) = Electric potential at each node of the mesh.
+	+Field attributes.
+Methods:
+	+Field methods.
+
+--------------------------------------------
+
+Magnetic_Field (Inherits from Field):
+
+Definition = Magnetic field
+Attibutes:
+	+type (string) = some string that describes the source of the magnetic field (created by the interaction plasma-spacecraft, user-defined, constant, etc.)
+	+Field attributes.
+Methods:
+	+Field methods.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Boundary (Abstract-like: will also have common methods that can be used by sub-classes. In composition with mesh):
+
+Definition = Class that shows the methods and attributes needed for each particular boundary arrangement.
+Attributes:
+	+type (string) = string indicating the type of boundary. It will be of the form "[Inner or Outer] - [Sorce, e.g. Spacecraft, Component, etc.]".
+	+location ([int]) = array containing the indices of the nodes that the boundary represents.
+Methods:
+	+applyElectricBoundary([double]) = Applies the boundary condition to the electric field passed as argument.
+	+applyMagneticBoundary([double]) = Applies the boundary condition to the magnetic field passed as argument.
+	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
+
+--------------------------------------------
+
+Outer_2D_Rectangular (Inherits from Boundary):
+
+Definition = Outer boundary for a rectangular mesh
+Attributes:
+	+type (string) = "Outer - Domain"
+	+xmin (double) = Left limit of the domain (closest to the Sun).
+	+xmax (double) = Right limit of the domain (farthest from the Sun).
+	+ymin (double) = Bottom limit of the domain.
+	+ymax (double) = Top limit of the domain.
+	+location ([int]) = Boundary attribute.
+Methods:
+	+Boundary methods.

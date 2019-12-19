@@ -12,9 +12,10 @@ import Boundaries.outer_2D_rectangular as ob
 #Definition = Defines the type of mesh.
 #Attributes:
 #	+nPoints (int) = Number of points in the mesh.
+#       +boundaries ([Boundary]) = List of different boundaries that define the mesh.
 #	+volumes ([double]) = Volume of each node.
 #Methods:
-#       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
+#       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints, boundaries and any other subclass variable.
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.
 #	+getIndex([double,double] pos): [double,double] = For each real position returns its index value. Important to remember that the number of columns may vary
 #           depending on the actual type of mesh subclass used.
@@ -57,6 +58,8 @@ class Mesh (object):
 #	+ny (int) = Number of nodes in the y direction.
 #       +dx (float32) = Distance between adyacent horizontal nodes
 #       +dy (float32) = Distance between adyacent vertical nodes
+#       +boundaries ([Boundary]) = It is [Outer_2D_Rectangular].
+#       +Mesh class attributes.
 #Methods:
 #	+Implementation of Mesh methods.
 class Mesh_2D_rm (Mesh):
@@ -66,10 +69,11 @@ class Mesh_2D_rm (Mesh):
         self.ny = numpy.uint16(40)
         self.depth = 1.0
 
-        self.xmin = ob.x_min
-        self.xmax = ob.x_max
-        self.ymin = ob.y_min
-        self.ymax = ob.y_max
+        self.boundaries = [Outer_2D_Rectangular()]
+        self.xmin = self.boundaries[0].xmin
+        self.xmax = self.boundaries[0].xmax
+        self.ymin = self.boundaries[0].ymin
+        self.ymax = self.boundaries[0].ymax
         self.dx = (self.xmax-self.xmin)/(self.nx-1)
         self.dy = (self.ymax-self.ymin)/(self.ny-1)
         self.setDomain()
@@ -77,11 +81,17 @@ class Mesh_2D_rm (Mesh):
 #       +setDomain() = This function, with the values provided by the boundary files, will create the mesh, by setting up volumes, nPoints and any other subclass variable.
     def setDomain(self):
         self.nPoints = numpy.uint16(self.nx*self.ny)
+
         self.volumes = (self.dx*self.dy*self.depth)*numpy.ones((self.nPoints), dtype = 'float32')
         self.volumes[:self.nx] /= 2
         self.volumes[self.nx*(self.ny-1):] /= 2
-        self.volumes[(self.nx-1)::self.nx] /= 2
-        self.volumes[:self.nx*self.ny-1:self.nx] /= 2
+        self.volumes[self.nx-1::self.nx] /= 2
+        self.volumes[:self.nx*self.ny:self.nx] /= 2
+
+        self.boundaries[0].location.extend(range(0, self.nx))
+        self.boundaries[0].location.extend(range(0, self.nx*self.ny, self.nx))
+        self.boundaries[0].location.extend(range(self.nx-1, self.nx*self.ny, self.nx))
+        self.boundaries[0].location.extend(range(self.nx*(self.ny-1), self.nx*self.ny))
 
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.
     def getPosition(self, ind):

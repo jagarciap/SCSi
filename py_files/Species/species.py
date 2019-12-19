@@ -36,11 +36,13 @@ class Species(object):
 #	+nPoints (int) = Number of nodes in the mesh (Same as mesh class).
 #	+density ([double]) = Density values at each node.
 #	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
+#       +residuals([double]) = remnants from injection of particles at the previous step.
 class Particles_In_Mesh(object):
     def __init__(self, n_nPoints, n_vel_dim):
         self.nPoints = n_nPoints
         self.density = numpy.zeros((nPoints))
         self.velocity = numpy.zeros((nPoints, n_vel_dim))
+        self.residuals = numpy.zeros((nPoints))
 
 
 #Particles:
