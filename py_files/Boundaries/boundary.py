@@ -53,9 +53,14 @@ def injectParticlesFace(self, location, pic, species, delta_n, n_vel):
     pos = numpy.zeros((total_new, species.pos_dim))
     vel = numpy.zeros((total_new, species.vel_dim))
     #Indices to operate over
-    ind = []
-    ind.extend(for i in lo i*numpy.ones((mp_new)))
-    ind = 
+    temp = numpy.ones((total_new))
+    c = 0
+    for i in range(len(location)):
+        temp[c:c+mp_new[i]] *= i
+        c += mp_new[i]
+    # Preparing positions (this part is dimensional-dependent [To be depurated later or changed each time]
+    pos[:,0] += numpy.random.rand(total_new)*(nVel
+    
 
 
 
