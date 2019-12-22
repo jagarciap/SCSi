@@ -5,6 +5,7 @@ import numpy
 #
 #Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
 #Attributes:
+#       +dt (double) = timestep for the motion of the particle.
 #	+q (double) = charge of the species.
 #	+m (double) = mass of the species.
 #	+q_over_m (double) = q/m.
@@ -15,12 +16,13 @@ import numpy
 #	+mesh_values (Particles_In_Mesh) = object to store anything related with the particles in the mesh.
 #	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
 #Notes:
-#       +__init__() also receives nPoints from mesh
+#       +__init__() receives nPoints from mesh
 class Species(object):
-    def __init__(self, n_q, n_m, n_q_over_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints):
-        self.q = nq_q
+    def __init__(self, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints):
+        self.dt = dt
+        self.q = n_q
         self.m = n_m
-        self.q_over_m = n_q_over_m
+        self.q_over_m = self.q/self.m
         self.debye = n_debye
         self.spwt = n_spwt
         self.pos_dim = n_pos_dim
@@ -40,9 +42,9 @@ class Species(object):
 class Particles_In_Mesh(object):
     def __init__(self, n_nPoints, n_vel_dim):
         self.nPoints = n_nPoints
-        self.density = numpy.zeros((nPoints))
-        self.velocity = numpy.zeros((nPoints, n_vel_dim))
-        self.residuals = numpy.zeros((nPoints))
+        self.density = numpy.zeros((self.nPoints))
+        self.velocity = numpy.zeros((self.nPoints, n_vel_dim))
+        self.residuals = numpy.zeros((self.nPoints))
 
 
 #Particles:

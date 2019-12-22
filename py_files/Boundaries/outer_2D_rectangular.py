@@ -1,11 +1,6 @@
-import boundary.py
+import numpy
 
-#Geometrical parameters for a rectangular outer boundary
-x_min = 0.0
-x_max = 10.0
-y_min = -5.0
-y_max = 5.0
-
+from Boundaries.boundary import Boundary
 
 #Outer_2D_Rectangular (Inherits from Boundary):
 #
@@ -20,18 +15,18 @@ y_max = 5.0
 #Methods:
 #	+Boundary methods.
 class Outer_2D_Rectangular(Boundary):
-    def __init__(self):
+    def __init__(self, x_min, x_max , y_min, y_max):
         self.type = "Outer - Domain"
         self.xmin = x_min
         self.xmax = x_max
         self.ymin = y_min
         self.ymax = y_max
-        location = []
+        self.location = []
 
 #	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument.
 #       In this case, V = 0 at the boundaries.
     def applyElectricBoundary(self, e_field):
-        e_field.potential[location] = 0
+        e_field.potential[self.location] = 0
 
 #	+applyMagneticBoundary(Magnetic_Field) = Applies the boundary condition to the magnetic field passed as argument.
 #       No magnetic field so far
@@ -40,4 +35,14 @@ class Outer_2D_Rectangular(Boundary):
 
 #	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
     def applyParticleBoundary(self, species):
-        pass
+        #Just for convenience in writing
+        np = species.part_values.current_n
+        #Finding the particles
+        ind = numpy.flatnonzero(numpy.logical_or(numpy.logical_or(numpy.logical_or(species.part_values.position[:np,0]< self.xmin, \
+                species.part_values.position[:np,0] > self.xmax), \
+                species.part_values.position[:np,1] > self.ymax), \
+                species.part_values.position[:np,1] < self.ymin))
+        # Eliminating particles
+        ndi_out = super().removeParticles(species,ind)
+        count2 = numpy.shape(ind)[0]
+        print('Number of{}eliminated:'.format(species.type), count2)

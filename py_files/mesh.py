@@ -63,13 +63,16 @@ class Mesh (object):
 #Methods:
 #	+Implementation of Mesh methods.
 class Mesh_2D_rm (Mesh):
-    def __init__(self):
-        # Variables that are declared here
-        self.nx = numpy.uint16(40)
-        self.ny = numpy.uint16(40)
-        self.depth = 1.0
+    def __init__(self, xmin, xmax, ymin, ymax, nx, ny, depth):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.nx = nx
+        self.ny = ny
+        self.depth = depth
 
-        self.boundaries = [Outer_2D_Rectangular()]
+        self.boundaries = [ob.Outer_2D_Rectangular(xmin, xmax, ymin, ymax)]
         self.xmin = self.boundaries[0].xmin
         self.xmax = self.boundaries[0].xmax
         self.ymin = self.boundaries[0].ymin
@@ -100,7 +103,7 @@ class Mesh_2D_rm (Mesh):
 
 #	+getIndex([double,double] pos): [double,double] = For each real position returns its index value.
     def getIndex(self, pos):
-        indexes = numpy.zeros(numpy.shape(pos)[0],2)
+        indexes = numpy.zeros((numpy.shape(pos)[0],2))
         indexes[:,0] = (pos[:,0]-self.xmin)/self.dx
         indexes[:,1] = (pos[:,1]-self.ymin)/self.dy
         return indexes
@@ -126,57 +129,3 @@ class Mesh_2D_rm (Mesh):
         vtkstring = cwd+'/results/mesh'
         vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.volumes.reshape((self.nx, self.ny, 1), order = 'F'),\
                 'positions': (numpy.reshape(copy.copy(pos[:,0]),(self.nx,self.ny,1), order = 'F'), numpy.reshape(copy.copy(pos[:,1]),(self.nx,self.ny,1), order = 'F'), numpy.zeros((self.nx,self.ny,1)))})
-
-
-class Domain(object):
-    def __init__(self,nz,nr,dz,dr,zmin,rmin,dt):
-        self.nz=nz				#number of nodes*/
-        self.nr=nr
-        self.dz=dz
-        self.dr=dr			#cell spacing*/
-        self.zmin = zmin
-        self.rmin = rmin
-        self.dt=dt
-        
-        self.phi=numpy.zeros((nz,nr))		#potential*/
-        self.ef =numpy.zeros((2,nz,nr))		#electric field*/
-
-        self.i_vel = numpy.zeros((2,nz,nr))	#ion velocity
-        self.i_current = numpy.zeros((nz,nr))   #current created by ions
-        self.e_vel = numpy.zeros((2,nz,nr))
-        self.e_current = numpy.zeros((nz,nr))   #current created by electrons
-
-        self.ndi=numpy.zeros((nz,nr))		#ion density*/
-        self.rho=numpy.zeros((nz,nr))		#charge density*/
-        self.nde=numpy.zeros((nz,nr))           #neutrals density
-
-        self.node_type=numpy.zeros((nz,nr), dtype = numpy.int8)		#node type for geometry
-        self.node_volume= dz*dr*numpy.ones((nz,nr))   #node volumes
-
-        self.temperature = numpy.zeros((nz,nr))         #Temperature in each node
-        self.mf = numpy.zeros((nz,nr))
-        self.mu_e = numpy.zeros((nz,nr))
-        
-class Particle(object):
-    def __init__(self,num):
-        self.x=numpy.zeros((num,2)) #Position
-        self.v=numpy.zeros((num,2)) #Velocity
-        self.printable = numpy.zeros(num, dtype = numpy.int8) #Print in Particle tracker
-        self.print_ind = [] #storage of printing indexes
-		
-class Species(object):
-    def __init__(self):
-        self.mass=[]
-        self.charge=[]
-        self.charge_over_mass=[]
-        self.spwt=[]
-
-        self.np=[]
-        self.np_alloc=[]
-        self.part=[]
-
-class NeumannBoundaries(object):
-    def __init__(self,world):
-        world.node_type[c.Z_IND:,0] = 5
-        world.node_type[-1,:] = 5
-        world.node_type[c.Z_IND:,-1] = 5

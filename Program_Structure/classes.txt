@@ -49,7 +49,7 @@ Attributes:
 Methods:
 	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
 	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
-                                                                                               The columns are the (x,y,z) positions
+                                                                                               The columns are the (x,y,z) components
 
 --------------------------------------------
 
@@ -71,6 +71,7 @@ Species (Abstract):
 
 Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
 Attributes:
+	+dt (double) = timestep for the motion of the particle.
 	+q (double) = charge of the species.
 	+m (double) = mass of the species.
 	+q_over_m (double) = q/m.
@@ -81,7 +82,7 @@ Attributes:
 	+mesh_values (Particles_In_Mesh) = object to store anything related with the particles in the mesh.
 	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
 Notes:
-       +__init__() also receives nPoints from mesh
+       +__init__() receives nPoints from mesh
 
 --------------------------------------------
 
@@ -94,11 +95,29 @@ Attributes:
 
 --------------------------------------------
 
+Proton_SW (Inherits from Species):
+
+Definition = Species that take care of protons coming from solar wind.
+Attributes:
+	+type (string) = "Proton - Solar wind"
+	+Species attributes.
+
+--------------------------------------------
+
 Electron (Inherits from Species):
 
 Definition = Species that take care of electrons.
 Attributes:
 	+type (string) = some string descriptor that indicate the type/source of electrons.
+	+Species attributes.
+
+--------------------------------------------
+
+Electron_SW (Inherits from Species):
+
+Definition = Species that take care of electrons coming from solar wind.
+Attributes:
+	+type (string) = "Electron - Solar wind"
 	+Species attributes.
 
 --------------------------------------------
@@ -158,12 +177,13 @@ Field (Abstract):
 Definition = Indicate the attributes and methods that all fields have to implement. The fields obtain the functions to compute the fields from 'solver.py'
 Attributes:
 	+pic (PIC) = Class that contains PIC methods.
-	+boundaries (Fields_Boundary) = Class that represents the methods which apply boundaries to the fields.
+	+boundaries ([Boundary]) = Class that represents the methods which apply boundaries to the fields.
 	+nPoints (int) = number of nodes in the mesh (Same as mesh class).
 	+field ([double, double]) = components (columns) of field at each node.
 Methods:
-	+computeField(...) = Computes the updated field values
-	+fieldAtParticles(...) [double,double] = return an array indicating by component (columns) and particles (rows) the field.
+	+__init__(...) = This function, for each subclass, will take care of the initial condition of the field.
+	+computeField([Species] species) = Computes the updated field values.
+	+fieldAtParticles([double,double] position) [double,double] = return an array indicating by component (columns) and particles (rows) the field at every position.
 
 --------------------------------------------
 
@@ -176,6 +196,17 @@ Attributes:
 	+Field attributes.
 Methods:
 	+Field methods.
+
+--------------------------------------------
+
+Constant_Electric_Field(Inherits from Electric_Field):
+
+Definition = Constant electric field impsoed by the user. Does not change through time.
+Attributes:
+	+type (string) = "Electric field - Constant".
+	+Electric_Field attributes.
+Methods:
+	+Electric_Field methods.
 
 --------------------------------------------
 
@@ -200,6 +231,16 @@ Methods:
 	+applyElectricBoundary([double]) = Applies the boundary condition to the electric field passed as argument.
 	+applyMagneticBoundary([double]) = Applies the boundary condition to the magnetic field passed as argument.
 	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
+   
+    +injectParticlesFace(self, location, pic, species, delta_n, n_vel, shift_vel): 
+   	++Function that inject particles into the domain.
+   	++Parameters: 
+   	++location ([ind]) = Nodes indicating the faces where the particles are going to be inserted. Each node represents the volume surrounding it. Location should be ordered increasingly.
+   	++pic (PIC) = Instance of PIC for calculations. It also constains mesh, which is used in the function.
+   	++species (Species) = Species to be inserted. It contains inside Particles_In_Mesh 'residuals' which is for each node the values of remnants from the insertion at the previous step.
+   	++delta_n ([double]) = For each node in location, the density that is going to be inserted at this timestep. The array is ordered with the order of the nodes in mesh.
+   	++n_vel ([double,double]) = For each node in location, the thermal velocity (for a the MB distribution) that the inserted particles will represent. Same order as delta_n.
+	++shit_vel ([double, double]) = For each node in location, an added velocity that does not come from temperature origin (like solaw wind average speed.
 
 --------------------------------------------
 
@@ -216,3 +257,35 @@ Attributes:
 Methods:
 	+Boundary methods.
 	+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Motion_Solver(Abstract-like: As with Boundary, some methods can be applied to various motion solvers, so they will be stored here):
+
+Definition = Class that shows which methods and attributes need to have all motion solvers.
+Attributes:
+	+type (string) = string indicating the type of scheme.
+    +pic_slv (PIC) = PIC solver. For this class specific methods not provided by PIC super class are used.
+Methods:
+	+initialConfiguration(Species, [Field]) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
+		it also takes care of the first update of Particle values in mesh. 
+	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
+	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh.
+	+updateParticles(Species, [Field]) = Particle advance in time.
+
+--------------------------------------------
+
+Leap_Frog(Inherits from Motion_Solver):
+
+Definition = Implementation of Leap_Frog method. This method, as being more specific, is more dependant on the current situation of each simulation. As such it has to
+               be updated or new classes has to be created if the situation varies.
+Attributes: 
+	+type (string) = "Leap Frog"
+    +pic_slv (PIC) = PIC solver. For this class specific methods not provided by PIC super class are used.
+Methods:
+	+initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
+	    it also takes care of the first update of Particle values in mesh. So far just E, so [Field]->Field.
+	+rewindVelocity(species, field) = Take the velocity of particles half a step back in time for 'field' electric field.
+	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
+	+updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
+	+Motion_Solver methods.

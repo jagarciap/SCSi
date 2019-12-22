@@ -11,7 +11,7 @@ import mesh as m
 #Methods:
 #	+scatter([double, double] positions, [double] values, [double] field) = Receives the positions of the particles, and makes scatter procedure, calculating the values of field for each node.
 #	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
-#                                                                                               The columns are the (x,y,z) positions
+#                                                                                               The columns are the (x,y,z) components
 class PIC (object):
     def __init__(self, mesh):
         self.mesh = mesh
@@ -62,10 +62,10 @@ class PIC_2D_rm1o(PIC):
         #numpy.add.at(field, (i[indy], j[indy]+1), (1-di[indy])*dj[indy]*value[indy])
         #numpy.add.at(field, (i[indxy]+1, j[indxy]+1), di[indxy]*dj[indxy]*value[indxy])
 
-        numpy.add.at(field, array, (1-di)*(1-dj)*value)
-        numpy.add.at(field, array+1, di*(1-dj)*value)
-        numpy.add.at(field, array+self.mesh.nx, (1-di)*dj*value)
-        numpy.add.at(field, array+self.mesh.nx+1, di*dj*value)
+        numpy.add.at(field, array, (1-di)*(1-dj)*values)
+        numpy.add.at(field, array+1, di*(1-dj)*values)
+        numpy.add.at(field, array+self.mesh.nx, (1-di)*dj*values)
+        numpy.add.at(field, array+self.mesh.nx+1, di*dj*values)
 
 #       +scatterDensity (Species) = return densities of that species in every node of the mesh.
     def scatterDensity(self, species):
@@ -76,7 +76,7 @@ class PIC_2D_rm1o(PIC):
         self.scatter(species.part_values.position[:species.part_values.current_n], species.spwt, species.mesh_values.density)
         
         #divide by cell volume
-        field /= self.mesh.volumes
+        species.mesh_values.density /= self.mesh.volumes
     
 #       +scatterVelocity (Species) = return velocities of that species in every node of the mesh.
     def scatterSpeed(self, species):
@@ -84,12 +84,12 @@ class PIC_2D_rm1o(PIC):
         species.mesh_values.velocity *= 0
     
         #scatter particles to the mesh
-        for dim in numpy.shape(species.part_values.velocity.shape)[1]:
+        for dim in range(numpy.shape(species.part_values.velocity)[1]):
             self.scatter(species.part_values.position[:species.part_values.current_n], \
                     species.part_values.velocity[:species.part_values.current_n,dim], species.mesh_values.velocity[:,dim])
+            #Divide by number of particles
+            species.mesh_values.velocity[:,dim] *= numpy.where(species.mesh_values.density < 1e-5, 0.0, species.spwt/species.mesh_values.density/self.mesh.volumes)
         
-        #Divide by number of particles
-        species.part_values.velocity *= numpy.where(species.mesh_values.density == 0, 0, species.spwt/species.mesh_values.density/self.mesh.volumes)
     
 #       +scatterFlux = return flux of particles of that species into every indicated node (not all the mesh).
     def scatterFlux(self):
@@ -108,6 +108,10 @@ class PIC_2D_rm1o(PIC):
         array = self.mesh.indexToArray(index)
         di = mc[:,0] - index[:,0]
         dj = mc[:,1] - index[:,1]
+
+        #NOTE: Maybe this can be further optmized later
+        di = numpy.repeat(di[:,None], 2, axis = 1)
+        dj = numpy.repeat(dj[:,None], 2, axis = 1)
 
         #From mesh to particles, summing in every dimension through different columns
         values += field[array,:]*(1-di)*(1-dj)

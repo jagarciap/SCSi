@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 
 #Physical constants
 EPS_0 =8.85418782e-12   # F/m, vacuum permittivity
@@ -6,30 +6,42 @@ K     =1.38064825e-23          # J/K, Boltzmann constant
 ME    =9.10938215e-31       # kg, electron mass
 QE    = -1.602176565e-19      # C, electron charge
 AMU   =1.660538921e-27  # kg, atomic mass unit
+MP = 1.007276467*AMU # kg, proton mass
 EV_TO_K=11604.525        # 1eV in Kelvin
 g = 9.80665 #Gravity on Earth surface
 
 #Simulation time's parameters
-NUM_TS = 1000   #Number of total steps in the system
-ELECTRON_TS = 250   #Internal iterations for electron dynamics
-DT= 5e-8            # time step size
-E_DT = 2e-10        # time step for electron dynamics
+NUM_TS = numpy.int(2e3)   #Number of total steps in the system
+P_DT= 5e-8            # time step size
+E_DT = 5e-9        # time step for electron dynamics
+ELECTRON_TS = 10   #Internal iterations for electron dynamics
 
-#Geometrical parameters
-R_MIN = -5e-2#3.5e-2        # r min para SPT
-R_MAX = 5e-2        # r max para SPT
-Z_MIN = -5e-2             # z min para SPT
-Z_MAX = 5e-2#2.5E-2      # acceleration channel exit
-NR = 40#12             # cell number in r-direction
-NZ = 40#50             # cell number in z-direction
-DR= (R_MAX-R_MIN)/NR         # cell r-spacing
-DZ= (Z_MAX-Z_MIN)/NZ#6.25e-4         # cell z-spacing
+#Geometrical parameters for a rectangular outer boundary
+XMIN = 0.0
+XMAX = 10.0
+YMIN = -5.0
+YMAX = 5.0
+DEPTH = 1.0
+NX = numpy.uint16(40)
+NY = numpy.uint16(40)
 
-#Particle parameters
-I_SIZE = 1     #Size of the ions array
-E_SIZE = 1     #Size of the electrons array
-I_SPWT = 1
-E_SPWT = 1
+#Particle physical parameters
+E_N = 7e9
+E_T = 84.47*EV_TO_K
+E_V_TH = numpy.sqrt(2*K*E_T/ME)
+E_V_SW = 300e3
+
+P_N = 7e9
+P_T = 87.25*EV_TO_K
+P_V_TH = numpy.sqrt(2*K*P_T/MP)
+P_V_SW = 300e3
+
+#Particle simulation parameters
+P_SIZE = numpy.uint32(2e4)     #Size of the ions array
+E_SIZE = numpy.uint32(2e4)     #Size of the electrons array
+P_SPWT = 7e8
+E_SPWT = 7e8
 
 #Number of particles traced
 NUM_PART = E_SIZE
+DIM = numpy.uint8(2)
