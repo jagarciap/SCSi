@@ -39,8 +39,8 @@ drift_p_vel[:,0] += c.P_V_SW
 
 for boundary in mesh.boundaries:
     boundary.applyElectricBoundary(e_field)
-    boundary.injectParticlesFace(left_boundary, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
-    boundary.injectParticlesFace(left_boundary, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
+    boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
+    boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
 part_solver.initialConfiguration(protons, e_field)
 part_solver.initialConfiguration(electrons, e_field)
 
@@ -59,12 +59,12 @@ for tp in range(c.NUM_TS):
         # Applying field borders and injecting electrons
         for boundary in mesh.boundaries:
             boundary.applyElectricBoundary(e_field)
-            boundary.injectParticlesFace(left_boundary, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
+            boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
 
     #Proton motion
     part_solver.advance(protons, e_field)
     for boundary in mesh.boundaries:
-        boundary.injectParticlesFace(left_boundary, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
+        boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
 
     #Output
     if tp%10 == 0:

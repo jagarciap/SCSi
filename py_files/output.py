@@ -94,7 +94,6 @@ def particle_Tracker_print(ts, ions, neutrals, num = 100):
     if len(ions.part.print_ind) > 0 or len(neutrals.part.print_ind) > 0:
         pdb.set_trace()
 
-    ## I should eliminate the [:100] part later
     narray = numpy.zeros((num,4))
     narray[ions.part.printable[ind_ions]-1, 0] = ions.part.x[ind_ions,0]
     narray[ions.part.printable[ind_ions]-1, 1] = ions.part.x[ind_ions,1]

@@ -59,7 +59,7 @@ class Electric_Field(Field):
 class Constant_Electric_Field(Electric_Field):
     def __init__(self, n_pic, n_boundaries, n_points, field_dim):
         super().__init__(n_pic, n_boundaries, n_points, field_dim, "Electric field - Constant")
-        self.field[:,0] += 10.0
+        self.field[:,0] += 0.0
 
     def computeField(self, species):
         pass

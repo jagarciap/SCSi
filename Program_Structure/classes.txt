@@ -231,7 +231,9 @@ Methods:
 	+applyElectricBoundary([double]) = Applies the boundary condition to the electric field passed as argument.
 	+applyMagneticBoundary([double]) = Applies the boundary condition to the magnetic field passed as argument.
 	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
+    +createDummyBox([ind]location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = create the dummy boxes with particles in them.
    
+Methods stored here for convenience:
     +injectParticlesFace(self, location, pic, species, delta_n, n_vel, shift_vel): 
    	++Function that inject particles into the domain.
    	++Parameters: 
@@ -241,6 +243,13 @@ Methods:
    	++delta_n ([double]) = For each node in location, the density that is going to be inserted at this timestep. The array is ordered with the order of the nodes in mesh.
    	++n_vel ([double,double]) = For each node in location, the thermal velocity (for a the MB distribution) that the inserted particles will represent. Same order as delta_n.
 	++shit_vel ([double, double]) = For each node in location, an added velocity that does not come from temperature origin (like solaw wind average speed.
+
+	+injectParticlesDummyBox([int] location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = Inject the particles in location indices by creating dummy boxes around them, creating particles
+		inside of them, moving the particles, and then adding the ones that entered into the computational domain.
+
+    +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
+    +removeParticles(Species species, [ind] ind) = Removes the particles from species stored at 'ind' positions.
+    +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
 
 --------------------------------------------
 
@@ -256,7 +265,6 @@ Attributes:
 	+location ([int]) = Boundary attribute.
 Methods:
 	+Boundary methods.
-	+
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
