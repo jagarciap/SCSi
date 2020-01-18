@@ -47,7 +47,7 @@ class Particles_In_Mesh(object):
         self.residuals = numpy.zeros((self.nPoints))
 
 
-#Particles:
+#Particles(Composition with Species):
 #
 #Definition = Stores values related with the particles themselves.
 #Attributes:
@@ -55,9 +55,14 @@ class Particles_In_Mesh(object):
 #	+max_n (int) = max. number of particles for the species.
 #	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
 #	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
+#	+num_tracked (int) = Size of particles being tracked. Defaults to 0 meaning that the species is not being tracked.
+#	+trackers ([int]) = array of size num_tracked that store the indices of the particles as stored in positions.
 class Particles(object):
-    def __init__(self, n_max_n, n_pos_dim, n_vel_dim):
+    def __init__(self, n_max_n, n_pos_dim, n_vel_dim, num_tracked = 0):
         self.current_n = numpy.uint32(0)
-        self.max_n = n_max_n
+        self.max_n = numpy.uint32(n_max_n)
         self.position = numpy.zeros((n_max_n, n_pos_dim))
         self.velocity = numpy.zeros((n_max_n, n_vel_dim))
+        self.num_tracked = numpy.uint16(num_tracked)
+        if num_tracked != 0:
+            self.trackers = self.max_n*numpy.ones((num_tracked), dtype = numpy.uint32)

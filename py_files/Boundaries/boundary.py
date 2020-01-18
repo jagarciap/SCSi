@@ -16,7 +16,7 @@ from Species.species import Species
 #	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
 #       +createDummyBox(self, location, pic, species, delta_n, n_vel, shift_vel) = create the dummy box with particles in it.
 #       +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
-#       +removeParticles(Species species, [ind] ind) = Removes the particles from species stored at 'ind' positions.
+#       +removeParticles(Species species, [ind] ind, Boolean tracker) = Removes the particles from species stored at 'ind' positions. tracker indicates whether there is need for handling a Tracker instance.
 #       +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
 class Boundary(object):
     def applyElectricBoundary(self, e_field):
@@ -57,12 +57,35 @@ class Boundary(object):
         #increment particle counter
         species.part_values.current_n += n
 
-#       +Eliminates the particles  denoted with the indices ind.
+#       +Eliminates the particles  denoted with the indices ind. 
     def removeParticles(self, species, ind):
+        #Eliminating particles
         temp = species.part_values.current_n
         species.part_values.current_n -= numpy.shape(ind)[0]
         species.part_values.position[:species.part_values.current_n,:] = numpy.delete(species.part_values.position[:temp,:], ind, axis = 0)
         species.part_values.velocity[:species.part_values.current_n,:] = numpy.delete(species.part_values.velocity[:temp,:], ind, axis = 0)
+        #Updating tracker
+        #NOTE: Include unsorted to sorted arrays
+        if species.part_values.num_tracked != 0:
+            ind_c = 0
+            tracker_c = 0
+            n = 0
+            while ind_c != len(ind) and tracker_c != species.part_values.num_tracked:
+                if ind1[ind_c] < trackers1[tracker_c]:
+                    n += 1
+                    ind_c += 1
+                    break
+                elif ind1[ind_c] > trackers1[tracker_c]:
+                    trackers1[tracker_c] -= n
+                    tracker_c += 1
+                    break
+                elif ind1[ind_c] == trackers1[tracker_c]:
+                    trackers1[tracker_c] = species.part_values.max_n
+                    n += 1
+                    tracker_c += 1
+                    ind_c += 1
+            if ind_c == len(ind1) and tracker_c < len(trackers1):
+                trackers1[tracker_c:] -= n
 
 #       +Function that inject particles into the domain.
 #       +Parameters: 

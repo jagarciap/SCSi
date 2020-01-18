@@ -169,6 +169,8 @@ Attributes:
 	+max_n (int) = max. number of particles for the species.
 	+position ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) if available.
 	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
+	+num_tracked (int) = Size of particles being tracked. Defaults to 0 meaning that the species is not being tracked.
+	+trackers ([int]) = array of size num_tracked that store the indices of the particles as stored in positions.
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -317,3 +319,4 @@ Definition = Class that store the indices of the particles being tracked for a c
 Attributes:
 	+identifier (String) = Same species.type
 	+indices (int) = array of size num_tracked that store the indices of the particles as stored in Particles class.
+	+position ([double,double]) = reference to the list of positions of the species being tracked.

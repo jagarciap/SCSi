@@ -23,23 +23,17 @@ class Tracker(object):
             if numpy.any(numpy.isnan(spc.indices)):
                 raise ValueError("There should not be any nan values")
 
-        ind_ions = numpy.flatnonzero(ions.part.printable[:ions.np])
-        ind_neutrals = numpy.flatnonzero(neutrals.part.printable[:neutrals.np])
-        np_ions = len(ind_ions)
-        np_neutrals = len(ind_neutrals)
-        if len(ions.part.print_ind) > 0 or len(neutrals.part.print_ind) > 0:
-            pdb.set_trace()
 
-        narray = numpy.zeros((self.num_tracked,2*len(self.trackers)))
-        narray[ions.part.printable[ind_ions]-1, 0] = ions.part.x[ind_ions,0]
-        narray[ions.part.printable[ind_ions]-1, 1] = ions.part.x[ind_ions,1]
-        narray[neutrals.part.printable[ind_neutrals]-1, 2] = neutrals.part.x[ind_neutrals,0]
-        narray[neutrals.part.printable[ind_neutrals]-1, 3] = neutrals.part.x[ind_neutrals,1]
+        narray = numpy.zeros((self.num_tracked, numpy.shape(self.trackers[0].position)[1]*len(self.trackers)))
+        nHeader = ''
+        for i in len(self.trackers):
+            narray[:,2*i:2*(i+1)] = self.trackers[i].position[self.trackers[i].indices,:]
+            nHeader += self.trackers[i].identifier + '\t'
 
-        cwd = os.getcwd()
+        cwd = os.path.split(os.getcwd())[0]
         workfile = cwd+'/particle_tracker/ts={:05d}.dat'.format(ts)
-        nheader = 'Max. number of particles: \t {:4d} \n Ions \t Neutrals \n {:3d} \t {:3d} \n'.format( num,np_ions, np_neutrals)
-        numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nheader)
+        nHeader = 'No. of particles = {:d} \n'.format(self.num_tracked)+nHeader+'\n' 
+        numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nHeader)
 
 #Species_Tracker (Composition with Tracker):
 #
@@ -47,7 +41,9 @@ class Tracker(object):
 #Attributes:
 #	+identifier (String) = Same species.type
 #	+indices (int) = array of size num_tracked that store the indices of the particles as stored in Particles class.
+#       +position ([double,double]) = reference to the list of positions of the species being tracked.
 class Species_Tracker(object):
     def __init__(self, species, num_tracked):
         self.identifier = species.type
-        indices = numpy.nan*numpy.ones((num_tracked), dtype = numpy.uint32)
+        self.indices = numpy.nan*numpy.ones((num_tracked), dtype = numpy.uint32)
+        self.position = species.part_values.position

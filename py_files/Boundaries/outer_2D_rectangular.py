@@ -44,7 +44,7 @@ class Outer_2D_Rectangular(Boundary):
                 species.part_values.position[:np,1] >= self.ymax), \
                 species.part_values.position[:np,1] <= self.ymin))
         # Eliminating particles
-        ndi_out = super().removeParticles(species,ind)
+        super().removeParticles(species,ind)
         count2 = numpy.shape(ind)[0]
         print('Number of {} eliminated:'.format(species.type), count2)
 
