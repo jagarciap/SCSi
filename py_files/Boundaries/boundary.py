@@ -119,6 +119,6 @@ class Boundary(object):
         ind = numpy.flatnonzero(numpy.logical_and(ghost.part_values.position[:np,0] > pic.mesh.xmin,\
                                 numpy.logical_and(ghost.part_values.position[:np,0] < pic.mesh.xmax,\
                                 numpy.logical_and(ghost.part_values.position[:np,1] > pic.mesh.ymin, ghost.part_values.position[:np,1] < pic.mesh.ymax))))
-        self.addParticles(species, pos[ind,:], vel[ind])
+        self.addParticles(species, ghost.part_values.position[ind,:], ghost.part_values.velocity[ind])
         print("Injected particles: ",len(ind))
         print("Total{}".format(species.type), species.part_values.current_n)

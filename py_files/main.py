@@ -26,21 +26,22 @@ part_solver = Leap_Frog(pic)
 # Initial condition
 ## ---------------------------------------------------------------------------------------------------------------
 
-#Injection of particles in the left side and conditions for velocity
-left_boundary = numpy.arange(0,c.NX*c.NY,c.NX)
+#Injection of particles at all outer boundaries
 #Electrons
-drift_e_vel = numpy.zeros((len(left_boundary),2))
-thermal_e_vel = c.E_V_TH*numpy.ones((len(left_boundary)))
+e_n = c.E_N*numpy.ones((len(pic.mesh.boundaries[0].location)))
+drift_e_vel = numpy.zeros((len(pic.mesh.boundaries[0].location),2))
+thermal_e_vel = c.E_V_TH*numpy.ones((len(pic.mesh.boundaries[0].location)))
 drift_e_vel[:,0] += c.E_V_SW
 #Protons
-drift_p_vel = numpy.zeros((len(left_boundary),2))
-thermal_p_vel = c.P_V_TH*numpy.ones((len(left_boundary)))
+p_n = c.P_N*numpy.ones((len(pic.mesh.boundaries[0].location)))
+drift_p_vel = numpy.zeros((len(pic.mesh.boundaries[0].location),2))
+thermal_p_vel = c.P_V_TH*numpy.ones((len(pic.mesh.boundaries[0].location)))
 drift_p_vel[:,0] += c.P_V_SW
 
 for boundary in mesh.boundaries:
     boundary.applyElectricBoundary(e_field)
-    boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
-    boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
+    boundary.injectParticlesDummyBox(boundary.location, pic, electrons, e_n, thermal_e_vel, drift_e_vel)
+    boundary.injectParticlesDummyBox(boundary.location, pic, protons, p_n, thermal_p_vel, drift_p_vel)
 part_solver.initialConfiguration(protons, e_field)
 part_solver.initialConfiguration(electrons, e_field)
 
@@ -59,12 +60,12 @@ for tp in range(c.NUM_TS):
         # Applying field borders and injecting electrons
         for boundary in mesh.boundaries:
             boundary.applyElectricBoundary(e_field)
-            boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, electrons, c.E_N, thermal_e_vel, drift_e_vel)
+            boundary.injectParticlesDummyBox(boundary.location, pic, electrons, e_n, thermal_e_vel, drift_e_vel)
 
     #Proton motion
     part_solver.advance(protons, e_field)
     for boundary in mesh.boundaries:
-        boundary.injectParticlesDummyBox(pic.mesh.boundaries[0].location, pic, protons, c.P_N, thermal_p_vel, drift_p_vel)
+        boundary.injectParticlesDummyBox(boundary.location, pic, protons, p_n, thermal_p_vel, drift_p_vel)
 
     #Output
     if tp%10 == 0:

@@ -95,6 +95,7 @@ class Mesh_2D_rm (Mesh):
         self.boundaries[0].location.extend(range(0, self.nx*self.ny, self.nx))
         self.boundaries[0].location.extend(range(self.nx-1, self.nx*self.ny, self.nx))
         self.boundaries[0].location.extend(range(self.nx*(self.ny-1), self.nx*self.ny))
+        self.boundaries[0].location.sort()
         self.boundaries[0].location = numpy.asarray(self.boundaries[0].location, dtype = 'uint16')
 
 #	+getPosition([int] i): [double, double y] = For a each index return its real position.

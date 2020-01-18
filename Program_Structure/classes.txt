@@ -161,7 +161,7 @@ Attributes:
 
 --------------------------------------------
 
-Particles:
+Particles(Composition with Species):
 
 Definition = Stores values related with the particles themselves.
 Attributes:
@@ -297,3 +297,23 @@ Methods:
 	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
 	+updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
 	+Motion_Solver methods.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Tracker:
+
+Defintion = Class that initializes and stores the information for the tool of tracking particles after execution.
+Attributes:
+	+trackers ([Species_Tracker]) = List of instances of Species_Tracker.
+	+num_tracked (int) = Number of particles to be tracked.
+Methods:
+	+print() = Creates the files and print the information of the particles. Is basically the function to be called for output of information.
+
+--------------------------------------------
+
+Species_Tracker (Composition with Tracker):
+
+Definition = Class that store the indices of the particles being tracked for a certain species.
+Attributes:
+	+identifier (String) = Same species.type
+	+indices (int) = array of size num_tracked that store the indices of the particles as stored in Particles class.
