@@ -3,8 +3,11 @@ import pic
 import Species.species
 import numpy
 
-trackers1 = numpy.asarray([0, 4, 15, 26, 136, 900, 901, 1000, 4000, 4001])
-ind1 = numpy.asarray([0, 1, 2, 5, 61, 124, 125, 126, 136, 1000])
+trackers = numpy.asarray([0, 26, 4001, 72, 900, 136, 4, 1000, 15, 901])
+ind = numpy.asarray([0, 5, 61, 6, 124, 136, 1000, 125, 126, 4])
+ind1 = numpy.sort(ind)
+ind_trackers = numpy.argsort(trackers)
+trackers1 = trackers[ind_trackers]
 
 ind_c = 0
 tracker_c = 0
@@ -27,4 +30,6 @@ while ind_c != len(ind1) and tracker_c != len(trackers1):
 if ind_c == len(ind1) and tracker_c < len(trackers1):
     trackers1[tracker_c:] -= n
 
-print(trackers1, tracker_c, ind_c, n)
+print(trackers1)
+trackers[ind_trackers] = trackers1
+print(trackers, tracker_c, ind_c, n)

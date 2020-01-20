@@ -18,7 +18,7 @@ import numpy
 #Notes:
 #       +__init__() receives nPoints from mesh
 class Species(object):
-    def __init__(self, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints):
+    def __init__(self, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
         self.dt = dt
         self.q = n_q
         self.m = n_m
@@ -28,7 +28,7 @@ class Species(object):
         self.pos_dim = n_pos_dim
         self.vel_dim = n_vel_dim
         self.mesh_values = Particles_In_Mesh(n_nPoints, n_vel_dim)
-        self.part_values = Particles(n_max_n, n_pos_dim, n_vel_dim)
+        self.part_values = Particles(n_max_n, n_pos_dim, n_vel_dim, n_num_tracked)
 
 
 #Particles_In_Mesh (Abstract)(Composition with Species):
@@ -58,7 +58,7 @@ class Particles_In_Mesh(object):
 #	+num_tracked (int) = Size of particles being tracked. Defaults to 0 meaning that the species is not being tracked.
 #	+trackers ([int]) = array of size num_tracked that store the indices of the particles as stored in positions.
 class Particles(object):
-    def __init__(self, n_max_n, n_pos_dim, n_vel_dim, num_tracked = 0):
+    def __init__(self, n_max_n, n_pos_dim, n_vel_dim, num_tracked):
         self.current_n = numpy.uint32(0)
         self.max_n = numpy.uint32(n_max_n)
         self.position = numpy.zeros((n_max_n, n_pos_dim))

@@ -18,8 +18,8 @@ import output as out
 mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
 pic = PIC_2D_rm1o(mesh)
 e_field = Constant_Electric_Field(pic, mesh.boundaries, mesh.nPoints, c.DIM)
-electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, mesh.nPoints)
-protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, mesh.nPoints)
+electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
+protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
 part_solver = Leap_Frog(pic)
 
 ## ---------------------------------------------------------------------------------------------------------------
@@ -67,6 +67,8 @@ for tp in range(c.NUM_TS):
     for boundary in mesh.boundaries:
         boundary.injectParticlesDummyBox(boundary.location, pic, protons, p_n, thermal_p_vel, drift_p_vel)
 
-    #Output
+    #Output vtk
     if tp%10 == 0:
         out.output_vtk(tp, mesh, electrons, protons, e_field)
+    if tp%1 == 0:
+        out.particle_tracker(tp, protons, electrons)

@@ -36,6 +36,30 @@ def output_vtk(ts, mesh, electrons, protons, e_field):
                 numpy.reshape(copy.copy(e_field.field[:,1]),(nx,ny,1), order = 'F'), \
                 numpy.zeros((nx,ny,1)))})
 
+# The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
+#   specie1.x \t specie1.y \t specie2.x etc. Each row is a different particle for a particular species.
+def particle_tracker(ts, *args):
+    # Checking tracking method
+    for spc in args:
+        if spc.part_values.current_n > spc.part_values.num_tracked and numpy.any(spc.part_values.trackers == spc.part_values.max_n):
+            print("Error in species: ", spc.type)
+            print(spc.part_values.current_n, spc.part_values.num_tracked)
+            pdb.set_trace()
+            raise ValueError("There should not be any invalid values")
+
+    #Creating array to be printed and the header
+    narray = numpy.zeros((args[0].part_values.num_tracked, args[0].pos_dim*len(args)))
+    nHeader = ''
+    for i in range(len(args)):
+        ind = numpy.argwhere(args[i].part_values.trackers != args[i].part_values.max_n)
+        narray[ind, args[i].pos_dim*i:args[i].pos_dim*(i+1)] = args[i].part_values.position[args[i].part_values.trackers[ind],:]
+        nHeader += args[i].type + '\t'
+
+    cwd = os.path.split(os.getcwd())[0]
+    workfile = cwd+'/particle_tracker/ts={:05d}.dat'.format(ts)
+    nHeader = 'No. of particles = {:d} \n'.format(args[0].part_values.num_tracked)+nHeader
+    numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nHeader)
+
 def save_current_state(ts, world, ions, electrons):
     cwd = os.getcwd()
     time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
@@ -55,53 +79,4 @@ def load_state(filename):
         ions = pickle.load(pinput)
         electrons = pickle.load(pinput)
         return ts, world, ions, electrons
-
-def particle_Tracker_init(ions, electrons, num = 100):
-    ions_step = ions.np//num
-    electrons_step = electrons.np//num
-    ions.part.printable[numpy.arange(0,ions_step*num,ions_step)] = numpy.arange(1,num+1)
-    electrons.part.printable[numpy.arange(0, electrons_step*num, electrons_step)] = numpy.arange(1,num+1)
-
-def particle_Tracker_print(ts, ions, neutrals, num = 100):
-    
-    ind_ions = numpy.flatnonzero(ions.part.printable[:ions.np])
-    rem_ions = num-len(ind_ions)
-    ind_neutrals = numpy.flatnonzero(neutrals.part.printable[:neutrals.np])
-    rem_neutrals = num-len(ind_neutrals)
-
-    a, test_ions = numpy.unique(ions.part.print_ind, return_counts = True)
-    bool_ions = numpy.any(test_ions > 1)
-    a, test_neutrals = numpy.unique(neutrals.part.print_ind, return_counts = True)
-    bool_neutrals = numpy.any(test_neutrals > 1)
-    if rem_neutrals != len(neutrals.part.print_ind) or rem_ions != len(ions.part.print_ind) \
-            or bool_ions or bool_neutrals:
-                pdb.set_trace()
-
-    if rem_ions > 0:
-        step = (ions.np-ind_ions[-1])//rem_ions
-        for i in range(rem_ions):
-            ions.part.printable[ind_ions[-1]+1+i*step] = ions.part.print_ind.pop(0)
-
-    if rem_neutrals > 0:
-        step = (neutrals.np-ind_neutrals[-1])//rem_neutrals
-        for i in range(rem_neutrals):
-            neutrals.part.printable[ind_neutrals[-1]+1+i*step] = neutrals.part.print_ind.pop(0)
-
-    ind_ions = numpy.flatnonzero(ions.part.printable[:ions.np])
-    ind_neutrals = numpy.flatnonzero(neutrals.part.printable[:neutrals.np])
-    np_ions = len(ind_ions)
-    np_neutrals = len(ind_neutrals)
-    if len(ions.part.print_ind) > 0 or len(neutrals.part.print_ind) > 0:
-        pdb.set_trace()
-
-    narray = numpy.zeros((num,4))
-    narray[ions.part.printable[ind_ions]-1, 0] = ions.part.x[ind_ions,0]
-    narray[ions.part.printable[ind_ions]-1, 1] = ions.part.x[ind_ions,1]
-    narray[neutrals.part.printable[ind_neutrals]-1, 2] = neutrals.part.x[ind_neutrals,0]
-    narray[neutrals.part.printable[ind_neutrals]-1, 3] = neutrals.part.x[ind_neutrals,1]
-
-    cwd = os.getcwd()
-    workfile = cwd+'/particle_tracker/ts={:05d}.dat'.format(ts)
-    nheader = 'Max. number of particles: \t {:4d} \n Ions \t Neutrals \n {:3d} \t {:3d} \n'.format( num,np_ions, np_neutrals)
-    numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nheader)
 

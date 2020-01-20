@@ -91,10 +91,10 @@ class Mesh_2D_rm (Mesh):
         self.volumes[self.nx-1::self.nx] /= 2
         self.volumes[:self.nx*self.ny:self.nx] /= 2
 
-        self.boundaries[0].location.extend(range(0, self.nx))
+        self.boundaries[0].location.extend(range(1, self.nx-1))
         self.boundaries[0].location.extend(range(0, self.nx*self.ny, self.nx))
         self.boundaries[0].location.extend(range(self.nx-1, self.nx*self.ny, self.nx))
-        self.boundaries[0].location.extend(range(self.nx*(self.ny-1), self.nx*self.ny))
+        self.boundaries[0].location.extend(range(self.nx*(self.ny-1)+1, self.nx*self.ny-1))
         self.boundaries[0].location.sort()
         self.boundaries[0].location = numpy.asarray(self.boundaries[0].location, dtype = 'uint16')
 

@@ -56,44 +56,58 @@ class Outer_2D_Rectangular(Boundary):
         # Node by node
         for i in range(len(location)):
             # Amount of particles
-            mpf_new = delta_n[i]*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
-            mp_new = mpf_new.astype(int)
             # Setting up position and velocities
             if phys_loc[i,0] == pic.mesh.xmin:
                 if phys_loc[i,1] == pic.mesh.ymin:
-                    pos = numpy.ones((mp_new*4, species.pos_dim))*phys_loc[i].T
-                    pos[:,0] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dx
-                    pos[:,1] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dy
-                    pos = numpy.delete(pos, numpy.logical_and(pos[:,0] >= pic.mesh.xmin, pos[:,1] >= pic.mesh.ymin) , axis = 0)
+                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
+                    pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
+                    pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
+                    pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
+                    pos = numpy.delete(pos, numpy.flatnonzero(numpy.logical_and(pos[:,0] >= pic.mesh.xmin, pos[:,1] >= pic.mesh.ymin)), axis = 0)
                 elif phys_loc[i,1] == pic.mesh.ymax:
-                    pos = numpy.ones((mp_new*4, species.pos_dim))*phys_loc[i].T
-                    pos[:,0] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dx
-                    pos[:,1] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dy
-                    pos = numpy.delete(pos, numpy.logical_and(pos[:,0] >= pic.mesh.xmin, pos[:,1] <= pic.mesh.ymax) , axis = 0)
+                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
+                    pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
+                    pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
+                    pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
+                    pos = numpy.delete(pos, numpy.flatnonzero(numpy.logical_and(pos[:,0] >= pic.mesh.xmin, pos[:,1] <= pic.mesh.ymax)), axis = 0)
                 else:
+                    mpf_new = delta_n[i]*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
                     pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
                     pos[:,0] -= numpy.random.rand(mp_new)*pic.mesh.dx/2
                     pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
             elif phys_loc[i,0] == pic.mesh.xmax:
                 if phys_loc[i,1] == pic.mesh.ymin:
-                    pos = numpy.ones((mp_new*4, species.pos_dim))*phys_loc[i].T
-                    pos[:,0] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dx
-                    pos[:,1] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dy
-                    pos = numpy.delete(pos, numpy.logical_and(pos[:,0] <= pic.mesh.xmax, pos[:,1] >= pic.mesh.ymin) , axis = 0)
+                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
+                    pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
+                    pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
+                    pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
+                    pos = numpy.delete(pos, numpy.flatnonzero(numpy.logical_and(pos[:,0] <= pic.mesh.xmax, pos[:,1] >= pic.mesh.ymin)), axis = 0)
                 elif phys_loc[i,1] == pic.mesh.ymax:
-                    pos = numpy.ones((mp_new*4, species.pos_dim))*phys_loc[i].T
-                    pos[:,0] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dx
-                    pos[:,1] += (numpy.random.rand(mp_new*4)-0.5)*pic.mesh.dy
-                    pos = numpy.delete(pos, numpy.logical_and(pos[:,0] <= pic.mesh.xmax, pos[:,1] <= pic.mesh.ymax) , axis = 0)
+                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
+                    pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
+                    pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
+                    pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
+                    pos = numpy.delete(pos, numpy.flatnonzero(numpy.logical_and(pos[:,0] <= pic.mesh.xmax, pos[:,1] <= pic.mesh.ymax)), axis = 0)
                 else:
+                    mpf_new = delta_n[i]*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mp_new = mpf_new.astype(int)
                     pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
                     pos[:,0] += numpy.random.rand(mp_new)*pic.mesh.dx/2
                     pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy
             elif phys_loc[i,1] == pic.mesh.ymin:
+                mpf_new = delta_n[i]*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                mp_new = mpf_new.astype(int)
                 pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
                 pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
                 pos[:,1] -= numpy.random.rand(mp_new)*pic.mesh.dy/2
             else:
+                mpf_new = delta_n[i]*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                mp_new = mpf_new.astype(int)
                 pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
                 pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
                 pos[:,1] += numpy.random.rand(mp_new)*pic.mesh.dy/2

@@ -10,9 +10,9 @@ import constants as c
 #	+type (string) = some string descriptor that indicate the type/source of electrons.
 #	+Species attributes.
 class Electron(Species):
-    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_string):
+    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked, n_string):
         self.type = n_string
-        super().__init__(c.E_DT ,c.QE, c.ME, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints)
+        super().__init__(c.E_DT ,c.QE, c.ME, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked)
 
 #Electron_SW (Inherits from Species):
 #
@@ -21,5 +21,5 @@ class Electron(Species):
 #	+type (string) = "Electron - Solar wind"
 #	+Species attributes.
 class Electron_SW(Electron):
-    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints):
-        super().__init__(n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, "Electron - Solar wind")
+    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
+        super().__init__(n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked, "Electron - Solar wind")

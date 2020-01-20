@@ -4,6 +4,9 @@ import pdb
 
 from Species.species import Species
 
+#NOTE:Delete later
+import matplotlib.pyplot as plt
+
 #Boundary (Abstract-like: will also have common methods that can be used by sub-classes. In composition with mesh):
 #
 #Definition = Class that shows the methods and attributes needed for each particular boundary arrangement.
@@ -56,6 +59,22 @@ class Boundary(object):
         species.part_values.velocity[species.part_values.current_n:species.part_values.current_n+n]= vel
         #increment particle counter
         species.part_values.current_n += n
+        #Updating trackers
+        if species.part_values.num_tracked != 0:
+            ind_new = numpy.argwhere(species.part_values.trackers == species.part_values.max_n)
+            num_new = len(ind_new)
+            if num_new != 0:
+                init = species.part_values.current_n-n
+                if n < num_new:
+                    step = 1
+                    end = species.part_values.current_n
+                    ind2 = n
+                else:
+                    step = n//num_new
+                    end = init+step*num_new
+                    ind2 = num_new
+                species.part_values.trackers[ind_new[:ind2]] = numpy.arange(init, end, step, dtype = numpy.uint32)[:,None]
+
 
 #       +Eliminates the particles  denoted with the indices ind. 
     def removeParticles(self, species, ind):
@@ -64,12 +83,16 @@ class Boundary(object):
         species.part_values.current_n -= numpy.shape(ind)[0]
         species.part_values.position[:species.part_values.current_n,:] = numpy.delete(species.part_values.position[:temp,:], ind, axis = 0)
         species.part_values.velocity[:species.part_values.current_n,:] = numpy.delete(species.part_values.velocity[:temp,:], ind, axis = 0)
-        #Updating tracker
-        #NOTE: Include unsorted to sorted arrays
+        #Updating trackers
         if species.part_values.num_tracked != 0:
+            ind1 = numpy.sort(ind)
+            #Sorting both trackers and indices to be deleted
+            ind_trackers = numpy.argsort(species.part_values.trackers)
+            trackers1 = species.part_values.trackers[ind_trackers]
             ind_c = 0
             tracker_c = 0
             n = 0
+            #Processing the elimination of particles into trackers
             while ind_c != len(ind) and tracker_c != species.part_values.num_tracked:
                 if ind1[ind_c] < trackers1[tracker_c]:
                     n += 1
@@ -86,6 +109,8 @@ class Boundary(object):
                     ind_c += 1
             if ind_c == len(ind1) and tracker_c < len(trackers1):
                 trackers1[tracker_c:] -= n
+            #Updating trackers
+            species.part_values.trackers[ind_trackers] = trackers1
 
 #       +Function that inject particles into the domain.
 #       +Parameters: 
@@ -142,6 +167,6 @@ class Boundary(object):
         ind = numpy.flatnonzero(numpy.logical_and(ghost.part_values.position[:np,0] > pic.mesh.xmin,\
                                 numpy.logical_and(ghost.part_values.position[:np,0] < pic.mesh.xmax,\
                                 numpy.logical_and(ghost.part_values.position[:np,1] > pic.mesh.ymin, ghost.part_values.position[:np,1] < pic.mesh.ymax))))
-        self.addParticles(species, ghost.part_values.position[ind,:], ghost.part_values.velocity[ind])
+        self.addParticles(species, ghost.part_values.position[ind,:], ghost.part_values.velocity[ind,:])
         print("Injected particles: ",len(ind))
-        print("Total{}".format(species.type), species.part_values.current_n)
+        print("Total {}".format(species.type),": ", species.part_values.current_n)

@@ -37,11 +37,11 @@ P_V_TH = numpy.sqrt(2*K*P_T/MP)
 P_V_SW = 300e3
 
 #Particle simulation parameters
-P_SIZE = numpy.uint32(3e5)     #Size of the ions array
-E_SIZE = numpy.uint32(3e5)     #Size of the electrons array
-P_SPWT = 5e7
-E_SPWT = 5e7
+P_SIZE = numpy.uint32(1e6)     #Size of the ions array
+E_SIZE = numpy.uint32(1e6)     #Size of the electrons array
+P_SPWT = 2e7
+E_SPWT = 2e7
 
 #Number of particles traced
-NUM_PART = E_SIZE
+NUM_TRACKED = 100
 DIM = numpy.uint8(2)

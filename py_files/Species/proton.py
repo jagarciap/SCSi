@@ -9,9 +9,9 @@ import constants as c
 #	+type (string) = some string descriptor that indicate the type/source of protons.
 #	+Species attributes.
 class Proton(Species):
-    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_string):
+    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked, n_string):
         self.type = n_string
-        super().__init__(c.P_DT, -c.QE, c.MP, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints)
+        super().__init__(c.P_DT, -c.QE, c.MP, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked)
 
 #Proton_SW (Inherits from Species):
 #
@@ -20,5 +20,5 @@ class Proton(Species):
 #	+type (string) = "Proton - Solar wind"
 #	+Species attributes.
 class Proton_SW(Proton):
-    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints):
-        super().__init__(n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, "Proton - Solar wind")
+    def __init__(self, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
+        super().__init__(n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked, "Proton - Solar wind")
