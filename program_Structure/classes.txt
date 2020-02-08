@@ -59,7 +59,7 @@ Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementat
 Attributes:
 	+PIC class attributes.
 Methods:
-	+Implementation of PIC class methods.
++Implementation of PIC class methods.
 	+scatterDensity (Species) = return densities of that species in every node of the mesh.
 	+scatterVelocity (Species) = return velocities of that species in every node of the mesh.
 	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
@@ -179,8 +179,6 @@ Field (Abstract):
 Definition = Indicate the attributes and methods that all fields have to implement. The fields obtain the functions to compute the fields from 'solver.py'
 Attributes:
 	+pic (PIC) = Class that contains PIC methods.
-	+boundaries ([Boundary]) = Class that represents the methods which apply boundaries to the fields.
-	+nPoints (int) = number of nodes in the mesh (Same as mesh class).
 	+field ([double, double]) = components (columns) of field at each node.
 Methods:
 	+__init__(...) = This function, for each subclass, will take care of the initial condition of the field.
@@ -207,6 +205,17 @@ Definition = Constant electric field impsoed by the user. Does not change throug
 Attributes:
 	+type (string) = "Electric field - Constant".
 	+Electric_Field attributes.
+Methods:
+	+Electric_Field methods.
+
+--------------------------------------------
+
+Electrostatic_2D_rm_Electric_Field (Inherits from Electric_Field):
+
+Definition = Electric field for a 2D rectangular mesh, detached from the magnetic field. Uses methods from "solver.py" to calculate electric potential, and then electric field.
+Attributes:
+	+type (string) = "Electric field - Electrostatic_2D_rm".
+	+Elctric_Field attributes.
 Methods:
 	+Electric_Field methods.
 

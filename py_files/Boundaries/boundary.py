@@ -4,9 +4,6 @@ import pdb
 
 from Species.species import Species
 
-#NOTE:Delete later
-import matplotlib.pyplot as plt
-
 #Boundary (Abstract-like: will also have common methods that can be used by sub-classes. In composition with mesh):
 #
 #Definition = Class that shows the methods and attributes needed for each particular boundary arrangement.

@@ -17,7 +17,7 @@ import output as out
 
 mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
 pic = PIC_2D_rm1o(mesh)
-e_field = Constant_Electric_Field(pic, mesh.boundaries, mesh.nPoints, c.DIM)
+e_field = Electrostatic_2D_rm_Electric_Field(pic, c.DIM)
 electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
 protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
 part_solver = Leap_Frog(pic)

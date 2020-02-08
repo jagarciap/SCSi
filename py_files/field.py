@@ -1,7 +1,9 @@
 #Data structures that contain the fields of the system
 import numpy
 
+import constants as c
 import mesh as m
+import solver as slv
 
 #Field (Abstract):
 #
@@ -16,10 +18,8 @@ import mesh as m
 #	+computeField([Species] species) = Computes the updated field values.
 #	+fieldAtParticles([double,double] position) [double,double] = return an array indicating by component (columns) and particles (rows) the field at every position.
 class Field(object):
-    def __init__(self, n_pic, n_boundaries, n_points, field_dim):
+    def __init__(self, n_pic, field_dim):
             self.pic = n_pic
-            self.boundaries = n_boundaries
-            self.nPoints = n_points
             self.field = numpy.zeros((self.nPoints, field_dim))
 
     def computeField(self, species):
@@ -39,17 +39,35 @@ class Field(object):
 #Methods:
 #	+Field methods.
 class Electric_Field(Field):
-    def __init__(self, n_pic, n_boundaries, n_points, field_dim, n_string):
+    def __init__(self, n_pic, field_dim, n_string):
         self.type = n_string
         self.potential = numpy.zeros((n_points))
-        super().__init__(n_pic, n_boundaries, n_points, field_dim)
+        super().__init__(n_pic, field_dim)
 
     def computeField(self, species):
         pass
 
 
-#Constant_Electric_Field(Inherits from Electric_Field):
+#Electrostatic_2D_rm_Electric_Field (Inherits from Electric_Field):
 #
+#Definition = Electric field for a 2D rectangular mesh, detached from the magnetic field. Uses methods from "solver.py" to calculate electric potential, and then electric field.
+#Attributes:
+#	+type (string) = "Electric field - Electrostatic_2D_rm".
+#	+Elctric_Field attributes.
+#Methods:
+#	+Electric_Field methods.
+class Electrostatic_2D_rm_Electric_Field (Electric_Field):
+    def __init__(self, n_pic, field_dim):
+        super().__init__(n_pic, field_dim, "Electric field - Electrostatic_2D_rm")
+
+    def computeField(self, species):
+        #Prepare the right-hand-side of the Poisson equation 
+        rho = numpy.zeros_like(species[0].part_values.density)
+        rho += specie.part_values.density/specie.q for specie in species
+        rho /= -c.EPS_0
+        self.potential = slv.poissonSolver_2D_rm_SORCA(self.pic.mesh, self.potential, rho)
+        self.field = -slv.derive_2D_rm(self.pic.mesh, self.potential)
+
 #Definition = Constant electric field impsoed by the user. Does not change through time.
 #Attributes:
 #	+type (string) = "Electric field - Constant".
@@ -57,8 +75,8 @@ class Electric_Field(Field):
 #Methods:
 #	+Electric_Field methods.
 class Constant_Electric_Field(Electric_Field):
-    def __init__(self, n_pic, n_boundaries, n_points, field_dim):
-        super().__init__(n_pic, n_boundaries, n_points, field_dim, "Electric field - Constant")
+    def __init__(self, n_pic, field_dim):
+        super().__init__(n_pic, field_dim, "Electric field - Constant")
         self.field[:,0] += 0.0
 
     def computeField(self, species):
@@ -74,7 +92,7 @@ class Constant_Electric_Field(Electric_Field):
 #Methods:
 #	+Field methods.
 class Magnetic_Field(Field):
-    def __init__(self, n_pic, n_boundaries, n_points, field_dim, n_string):
+    def __init__(self, n_pic, field_dim, n_string):
         self.type = n_string
         super.__init__(n_pic, n_boundaries, n_points, field_dim)
 
