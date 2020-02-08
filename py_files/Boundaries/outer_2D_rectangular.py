@@ -24,10 +24,9 @@ class Outer_2D_Rectangular(Boundary):
         self.ymax = y_max
         self.location = []
 
-#	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument.
-#       In this case, V = 0 at the boundaries.
+#	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument. So far a 0V Dirichlet boundary condition is applied.
     def applyElectricBoundary(self, e_field):
-        pass
+        e_field.dirichlet(self.location, numpy.zeros((len(location))))
 
 #	+applyMagneticBoundary(Magnetic_Field) = Applies the boundary condition to the magnetic field passed as argument.
 #       No magnetic field so far

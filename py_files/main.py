@@ -3,7 +3,7 @@ import numpy
 numpy.seterr(invalid='ignore', divide='ignore', over = 'raise')
 
 import constants as c
-from field import Constant_Electric_Field
+from field import Electrostatic_2D_rm
 from mesh import Mesh_2D_rm
 from Species.proton import Proton_SW
 from Species.electron import Electron_SW
@@ -17,7 +17,7 @@ import output as out
 
 mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
 pic = PIC_2D_rm1o(mesh)
-e_field = Electrostatic_2D_rm_Electric_Field(pic, c.DIM)
+e_field = Electrostatic_2D_rm(pic, c.DIM)
 electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
 protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, mesh.nPoints, c.NUM_TRACKED)
 part_solver = Leap_Frog(pic)
@@ -39,7 +39,6 @@ thermal_p_vel = c.P_V_TH*numpy.ones((len(pic.mesh.boundaries[0].location)))
 drift_p_vel[:,0] += c.P_V_SW
 
 for boundary in mesh.boundaries:
-    boundary.applyElectricBoundary(e_field)
     boundary.injectParticlesDummyBox(boundary.location, pic, electrons, e_n, thermal_e_vel, drift_e_vel)
     boundary.injectParticlesDummyBox(boundary.location, pic, protons, p_n, thermal_p_vel, drift_p_vel)
 part_solver.initialConfiguration(protons, e_field)
@@ -59,7 +58,6 @@ for tp in range(c.NUM_TS):
         part_solver.advance(electrons, e_field)
         # Applying field borders and injecting electrons
         for boundary in mesh.boundaries:
-            boundary.applyElectricBoundary(e_field)
             boundary.injectParticlesDummyBox(boundary.location, pic, electrons, e_n, thermal_e_vel, drift_e_vel)
 
     #Proton motion

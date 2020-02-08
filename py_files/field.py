@@ -20,7 +20,7 @@ import solver as slv
 class Field(object):
     def __init__(self, n_pic, field_dim):
             self.pic = n_pic
-            self.field = numpy.zeros((self.nPoints, field_dim))
+            self.field = numpy.zeros((self.pic.mesh.nPoints, field_dim))
 
     def computeField(self, species):
         pass
@@ -41,7 +41,7 @@ class Field(object):
 class Electric_Field(Field):
     def __init__(self, n_pic, field_dim, n_string):
         self.type = n_string
-        self.potential = numpy.zeros((n_points))
+        self.potential = numpy.zeros((n_pic.mesh.nPoints))
         super().__init__(n_pic, field_dim)
 
     def computeField(self, species):
@@ -56,17 +56,28 @@ class Electric_Field(Field):
 #	+Elctric_Field attributes.
 #Methods:
 #	+Electric_Field methods.
-class Electrostatic_2D_rm_Electric_Field (Electric_Field):
+class Electrostatic_2D_rm(Electric_Field):
     def __init__(self, n_pic, field_dim):
         super().__init__(n_pic, field_dim, "Electric field - Electrostatic_2D_rm")
 
     def computeField(self, species):
         #Prepare the right-hand-side of the Poisson equation 
-        rho = numpy.zeros_like(species[0].part_values.density)
-        rho += specie.part_values.density/specie.q for specie in species
+        rho = numpy.zeros_like(species[0].mesh_values.density)
+        for specie in species:
+            rho += specie.mesh_values.density/specie.q
         rho /= -c.EPS_0
         slv.poissonSolver_2D_rm_SORCA(self.pic.mesh, self.potential, rho)
         self.field = -slv.derive_2D_rm(self.pic.mesh, self.potential)
+        for boundary in self.pic.mesh.boundaries:
+            boundary.applyElectricBoundary(self)
+
+#       +Computation of Dirichlet boundary condition at every node in location ([ind]). Every row in value ([double]) corresponds to one node in location.
+    def dirichlet(self, location, values):
+        #Dirichlet
+        self.potential[location] = values
+        #Electric field trough Pade 2nd order in the boundaries
+        self.field[location, :] = -slv.derive_2D_rm_boundaries(location, self.pic.mesh, self.potential)
+            
 
 #Definition = Constant electric field impsoed by the user. Does not change through time.
 #Attributes:

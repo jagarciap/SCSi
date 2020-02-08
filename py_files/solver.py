@@ -22,7 +22,7 @@ def poissonSolver_2D_rm_SORCA(mesh, pot, rhs, err = 1e-3, step_limit = 1000):
     d = c
     e = -2*(1/mesh.dx/mesh.dx+1/mesh.dy/mesh.dy)*numpy.ones(mesh.nPoints)
     #Defining rho
-    delta_sq = dx*dx if dx < dy else dy*dy
+    delta_sq = mesh.dx*mesh.dx if mesh.dx < mesh.dy else mesh.dy*mesh.dy
     rho = 1 - numpy.pi*numpy.pi/delta_sq
     #Solver
     w = 1.0
@@ -47,6 +47,53 @@ def poissonSolver_2D_rm_SORCA(mesh, pot, rhs, err = 1e-3, step_limit = 1000):
         if t == step_limit:
             raise ValueError("step_limit reached, solution not obtained. Error = {:e}.".format(norm))
 
+#       +Derivation of the scalar field potential ([double]) with the method of central differences, at nodes not in the boundaries.
+def derive_2D_rm(mesh, potential):
+    #Creating array of indexes to slice through
+    ind = numpy.arange(mesh.nPoints, dtype = numpy.uint16)
+    for boundary in mesh.boundaries:
+        ind = numpy.delete( ind, boundary.location)
+    #Creating temporary field
+    field = numpy.zeros((mesh.nPoints, 2))
+    #Derivation
+    field[ind,0] = (potential[ind+1]-potential[ind-1])/(2*mesh.dx)
+    field[ind,1] = (potential[ind+mesh.nx]-potential[ind-mesh.nx])/(2*mesh.dy)
+    return field
 
-def derive_2D_rm(mesh, self.potential):
-
+#       +Pade derivation for the nodes in the boundaries. Normal 2nd order derivation when the boundary is perpendicular to the direction of the derivative.
+#       +Arguments:
+#       +location ([ind]) = location of the boundary nodes to be treated.
+#       +mesh (Outer_2D_Rectangular) = mesh with the information to make the finite difference.
+#       +potential ([double]) = scalar to be derivated.
+#       +Return: [double, double] two-component derivation of potential, with every row being one node of location.
+def derive_2D_rm_boundaries(location, mesh, potential):
+    #Creating temporary field
+    field = numpy.zeros((len(location),2))
+    for ind in location:
+        #Handling corners
+        if ind == 0:
+            field[location,0] = (-3*potential[ind]+4*potential[ind+1]-potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (-3*potential[ind]+4*potential[ind+mesh.nx]-potential[ind+2*mesh.nx])/(2*mesh.dy)
+        elif ind == mesh.nx:
+            field[location,0] = (3*potential[ind]-4*potential[ind+1]+potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (-3*potential[ind]+4*potential[ind+mesh.nx]-potential[ind+2*mesh.nx])/(2*mesh.dy)
+        elif ind == mesh.nx*(mesh.ny-1):
+            field[location,0] = (-3*potential[ind]+4*potential[ind+1]-potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (3*potential[ind]-4*potential[ind+mesh.nx]+potential[ind+2*mesh.nx])/(2*mesh.dy)
+        elif ind == mesh.nx*mesh.ny-1:
+            field[location,0] = (3*potential[ind]-4*potential[ind+1]+potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (3*potential[ind]-4*potential[ind+mesh.nx]+potential[ind+2*mesh.nx])/(2*mesh.dy)
+        #Handling non-corner borders
+        elif ind < mesh.nx:
+            field[location,0] = (potential[ind+1]-potential[ind-1])/(2*mesh.dx)
+            field[location,1] = (-3*potential[ind]+4*potential[ind+mesh.nx]-potential[ind+2*mesh.nx])/(2*mesh.dy)
+        elif ind%mesh.nx == 0:
+            field[location,0] = (-3*potential[ind]+4*potential[ind+1]-potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (potential[ind+mesh.nx]-potential[ind-mesh.nx])/(2*mesh.dy)
+        elif ind%mesh.nx == mesh.nx-1:
+            field[location,0] = (3*potential[ind]-4*potential[ind+1]+potential[ind+2])/(2*mesh.dx)
+            field[location,1] = (potential[ind+mesh.nx]-potential[ind-mesh.nx])/(2*mesh.dy)
+        else:
+            field[location,0] = (potential[ind+1]-potential[ind-1])/(2*mesh.dx)
+            field[location,1] = (3*potential[ind]-4*potential[ind+mesh.nx]+potential[ind+2*mesh.nx])/(2*mesh.dy)
+    return field
