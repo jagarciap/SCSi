@@ -65,7 +65,7 @@ class Electrostatic_2D_rm_Electric_Field (Electric_Field):
         rho = numpy.zeros_like(species[0].part_values.density)
         rho += specie.part_values.density/specie.q for specie in species
         rho /= -c.EPS_0
-        self.potential = slv.poissonSolver_2D_rm_SORCA(self.pic.mesh, self.potential, rho)
+        slv.poissonSolver_2D_rm_SORCA(self.pic.mesh, self.potential, rho)
         self.field = -slv.derive_2D_rm(self.pic.mesh, self.potential)
 
 #Definition = Constant electric field impsoed by the user. Does not change through time.
