@@ -12,7 +12,7 @@ import pdb
 
 #NOTE: to keep the good detachment and modularity of the program, this function can be generalized easily. Each class that has something to print has a print function, which returns a dictionary.
 #       then, here, I just need to unravel and packed everything again.
-def output_vtk(ts, mesh, electrons, protons, e_field):
+def outputVTK(ts, mesh, electrons, protons, e_field):
     #Creating domain
     nx = mesh.nx
     ny = mesh.ny
@@ -38,7 +38,7 @@ def output_vtk(ts, mesh, electrons, protons, e_field):
 
 # The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
 #   specie1.x \t specie1.y \t specie2.x etc. Each row is a different particle for a particular species.
-def particle_tracker(ts, *args):
+def particleTracker(ts, *args):
     # Checking tracking method
     for spc in args:
         if spc.part_values.current_n > spc.part_values.num_tracked and numpy.any(spc.part_values.trackers == spc.part_values.max_n):
@@ -60,23 +60,28 @@ def particle_tracker(ts, *args):
     nHeader = 'No. of particles = {:d} \n'.format(args[0].part_values.num_tracked)+nHeader
     numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nHeader)
 
-def save_current_state(ts, world, ions, electrons):
-    cwd = os.getcwd()
+#       +Method that stores the information of the system, given in *args, in a '.pkl' file. See 'Pickle' module for further information.
+#       +Structure to be followed in *args:
+#       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver).
+#       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
+def savePickle(*args):
+    #Creating file's name
+    cwd = os.path.split(os.getcwd())[0]
     time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
     string = cwd+'/previous_executions/sys_ts={:d}_'.format(ts)+time+'.pkl'
+    #Storing information
     with open (string, 'wb') as output:
-        pickle.dump(ts, output, -1)
-        pickle.dump(world, output, -1)
-        pickle.dump(ions, output, -1)
-        pickle.dump(electrons, output, -1)
+        for arg in args:
+            pickle.dump(arg, output, -1)
 
-def load_state(filename):
-    cwd = os.getcwd()
+#       +Method that loads the information of the system from a '.pkl' and stores it in the arguments *args. See 'Pickle' module for further information.
+#       +Structure to be followed in *args:
+#       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver).
+#       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
+def load_state(filename, *args):
+    #Preparing path
+    cwd = os.path.split(os.getcwd())[0]
     filename = cwd+'/previous_executions/'+filename
     with open (filename, 'rb') as pinput:
-        ts = pickle.load(pinput)
-        world = pickle.load(pinput)
-        ions = pickle.load(pinput)
-        electrons = pickle.load(pinput)
-        return ts, world, ions, electrons
-
+        for arg in args:
+            arg = pickle.load(pinput)
