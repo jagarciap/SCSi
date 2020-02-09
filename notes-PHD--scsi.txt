@@ -236,3 +236,236 @@ Also, now it's not necessary to use getVolumes() so it was deleted.
 ----
 
 
+2019_12_18.txt -PHD --scsi
+
+> So, the Mesh class was receiving an instance of PIC, but PIC needs to know what kind of Mesh is being used. Considering that PIC class needs the Mesh instance for its functions, this class has prevalence over Mesh. On the other hand, conceptually speaking, one particular mesh may hold different PICs, or, saying in better terms, several PIC classes may be based on the same Mesh, but not the opposite. With that said is like particular class Mesh -> several PIC classes. So, Mesh has to be initialized first.
+> I deleted PIC from the attributes of a mesh and add the mesh as attribute to PIC.
+> New additions to mesh:
+	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
+	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
+> When translating code from my Master's code to SCSI, that SCSI is using nx and ny as nodes, but in my Masters are number of cells.
+> I am deleting the rows that took care of the particles at the edge (i = nx or j = ny) so now I will start considering that particles at those positions are removed. I think that will create a faster and easier code, with no perceptible losses in numerical precision.
+> There have been many small changes in the definitions of functions in PIC and PIC_2D_rm1o.
+> Species has to be declared after the Mesh, so that the attributes of Mesh can be used to define Species.
+
+----
+
+
+2019_12_19.txt -PHD --scsi
+
+> I will make a class Field, subclasses Electric_Field, Magnetic_Field, with the functions related with fields and interactions of these fields with the particles. These classes will have as attribute the file that contains the functions which handle with the boundaries of the fields. They will also have as import the file 'field_solvers.py' that compute the fields.
+> I am also implementing a boundary class that will handle methods related with boundaries. This is for later work, so let's write it down: The Abstract class may contain different methods already developed that are more general, like applying a Neumann boundary or a Dirichlet boundary to some nodes, then the subclasses can use these methods for their specific; this is to prevent too much code copy-pasting with every new version of a boundary. Also, it might be a good idea to put as an attribute of boundary, an array with the indices of the nodes that represent that boundary. Actually that last one I will use it.
+> So far I have been repeating many attributes through different classes. I will keep it like that for now because I am trying to make the first functioning version of the program, but at some point it will be good to review those redundancies.
+> [IMPORTANT]: There will be many 'boundary line units' in the code. Everytime working with them, they will be represented by the node next to them in anti-clockwise direction. In other terms, for every node, its line will be next to it in clockwise direction.
+> Inject particles contains a lot of information on how the workflow of the program works. New attributes to mesh, to Particles_In_Mesh.
+
+----
+
+
+2019_12_21.txt -PHD --scsi
+
+> I forgot to mention that I am injecting the particles in injectParticleFace in volumes that have the nodes at their center, different from the previous approach in the Masters' code where the volumes where determined as the volume in front of the areas which were the working units, with area meaning the regions delimited by the nodes.
+> I could consider using numba for some 'for' loops in my code, as a midway of accelerating the code later on.
+> Something to care about in the future, in particular the last part.
+#       NOTE: This function needs to be revised. random should not spread throughout different cells, and should use the same seed for every function call.
+
+----
+
+
+2019_12_22.txt -PHD --scsi
+
+> Now mesh, boundary, outer_2D_boundary, species and pic are "compiling". injectParticlesFace function has the potential to be further generalized and thus be used as the common method to insert particles troughout the whole mesh, but so far some of its line are mesh-dependant so it needs to be revised.
+> As the first try on my code I am using as input the values showed by guillemant2013simulation.
+> Right now dx = 0.25, and despite protons moving around 0.025 at max. per timestep, electrons due to its lighter mass and thus its higher thermal velocity move around 0.3. Because of this I will make a nested loop for electrons movement, with e_dt being 10 times smaller than p_dt.
+> Electron acceleration gained during its travel trhough the domain is approx 1/2 of the velocity due to its temperature. It will not influence the mesh for now because the dx is 10 times higher than the distance per timestep without acceleration, but be careful in the future.
+> In gather function, in pic.py, I think osme lines may be optimized later.
+> Besides the classes presented in class.txt, the code works with no class files like constants.py, main.py and output.py.
+> Another note about optimizing in output.py.
+
+----
+
+
+2020_01_07.txt -PHD --scsi
+
+> When explaining the idea behind the use of 'residuals' to Sano, I realized that something sounded weird there. If I am storing the fractional part in every step and then adding to the next, besides also adding a random fraction between 0 and 1, I am introducing more density than expected. One more particle in every step increase the density by 3e-8, which is 1/23 of the density being used right now. Now, to solve the issue of losing always a part of the density, we could just add every step the residuals, without the randomnes, but that would create a "breathing" phenomenon in the simulation. I thing that a good idea is to just add the random number. The more you loose when truncating, the more probable this random number will aggregate a new particle every step.
+> Besides, I have to check the boundary part x=xmin, x=max in injectParticles, since in my code particles being at x=min and x=max are eliminated.
+
+----
+
+
+2020_01_15.txt -PHD --scsi
+
+> So far the line of thought regarding INJECTION OF PARTICLES goes like this: 
+>> Currently I am injecting particles just in the left face, and eliminating particles as they cross the boundaries. I have to check it again, but I think this approach is creating a distribution of less particles than expected near all the boundaries except for the left face. One trick would be to treat top and bottom boundaries as mirrors, reflecting particles (this is done in paper ..., for example). Two issues with this: First, particles affected by whatever happens in the domain (different velocity, trayectory, etc.), instead of going away from the domain, would reflect back, interacting again with the domain, creating non-physical interactions. Second, the idea of mirroring particles is to simulate the idea of what would happen in reality: some imaginary border is created, some particles leave the domain and some others enter. The new particles entering into the domain have not previously being affected by the domain. Mirroring particles would produce a different physical situation at the boundaries. This problems would disappear with a domain big enough, so that things happening inside the domain are not that strongly affecting the boundaries, but this computationally costly. Maybe an improvement over the mirroring technique would be to reset the velocity of the reflected particles to a MB-distribution. That would leave concentrations of particles in some regions of the boundary, due to the effects of the physics inside the domain, as the only non-physicial boundary effect.
+>> Another idea is to inject particles in all the boundaries, taking into account the correct density expected for free stream, which involves which injection box to choose and what velocities to provide for the particles.
+> Dummy box: To solve all this seemingly complicated problems: insert a dummy box. Since you are providing a MB-distribution before the effective domain, the technique assures that at the boundary of the domain you're receiving the correct distribution. Because the dummy box empties over time, it is necessary to refresh it each time. It is important that velocities should follow the expected velocity distribution and that position should be random. In that way, particles with all the range of velocities will go into the domain.
+
+> So far the new function is not mesh-independent and is not so efficient. I think I might avoid the part of adding particles and just send the arrays to the advance function.
+
+----
+
+
+2020_01_16.txt -PHD --scsi
+
+This is the new Boundary class. The documentation was updated and the methods for dummy box injection are being created. Notice that createDummyBox is expected to be solved in every subclass, depending on the geometry of the boundary and the mesh.
+
+> CreateDummyBox: I wonder if the thing I am doing right now is more or less efficient than a python for, since I am going trough location array many times.
+
+--------------------------------------------
+
+Boundary (Abstract-like: will also have common methods that can be used by sub-classes. In composition with mesh):
+
+Definition = Class that shows the methods and attributes needed for each particular boundary arrangement.
+Attributes:
+	+type (string) = string indicating the type of boundary. It will be of the form "[Inner or Outer] - [Sorce, e.g. Spacecraft, Component, etc.]".
+	+location ([int]) = array containing the indices of the nodes that the boundary represents.
+Methods:
+	+applyElectricBoundary([double]) = Applies the boundary condition to the electric field passed as argument.
+	+applyMagneticBoundary([double]) = Applies the boundary condition to the magnetic field passed as argument.
+	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
+    +createDummyBox([ind]location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = create the dummy boxes with particles in them.
+   
+Methods stored here for convenience:
+    +injectParticlesFace(self, location, pic, species, delta_n, n_vel, shift_vel): 
+   	++Function that inject particles into the domain.
+   	++Parameters: 
+   	++location ([ind]) = Nodes indicating the faces where the particles are going to be inserted. Each node represents the volume surrounding it. Location should be ordered increasingly.
+   	++pic (PIC) = Instance of PIC for calculations. It also constains mesh, which is used in the function.
+   	++species (Species) = Species to be inserted. It contains inside Particles_In_Mesh 'residuals' which is for each node the values of remnants from the insertion at the previous step.
+   	++delta_n ([double]) = For each node in location, the density that is going to be inserted at this timestep. The array is ordered with the order of the nodes in mesh.
+   	++n_vel ([double,double]) = For each node in location, the thermal velocity (for a the MB distribution) that the inserted particles will represent. Same order as delta_n.
+	++shit_vel ([double, double]) = For each node in location, an added velocity that does not come from temperature origin (like solaw wind average speed.
+
+	+injectParticlesDummyBox([int] location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = Inject the particles in location indices by creating dummy boxes around them, creating particles
+		inside of them, moving the particles, and then adding the ones that entered into the computational domain.
+
+    +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
+    +removeParticles(Species species, [ind] ind) = Removes the particles from species stored at 'ind' positions.
+    +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
+
+--------------------------------------------
+
+> I created a "dashboard.py" file where I will be storing all chunks of code that for whatever reason are not necessary for the code, but might be of use in the future.
+> I am storing the last results which were run with 'injectParticlesFace' function.
+
+----
+
+
+2020_01_17.txt -PHD --scsi
+
+> The implementation of the dummy box works, and besides the not so elegant 'createDummyBox' function, everything else in the code is organized.
+> So, I will start implementing the particle tracker. In applyParticleBoundary I will insert an argument 'True' or 'False'. If true, it will call the function to delete particles from the storage of particles being tracked. In addParticles I will do the same, adding new particles to track. The storage will be handled as a list of instances of a class called 'Species_Tracker'. It will contain a numpy array of the indices of particles being tracked at any moment (indices with respect to position in part_values). The array will have the number of rows as the number of particles to be tracked, first column being the indentifier of the particle (from 0 to num-1) and the scond column being the index in part_values arrays. Ok, I will make just one column with the index in part_values, since the position of the index in the array can be used as the identifier of the tracked particle. If a particle is deleted, the index will change to 'numpy.nan'. addParticle will check for nans and will add the necessary amount of particles. Since injection of particles occurs after advance of particles, when the program reaches the stage of printing, no row shoule be nan. {Note: however I would like to check how vtk files handle 'nan' values, to make it compatible rather than raising an unwanted error}. There will be a class 'Tracker' that will receive a variable number of arguments will all the species that the user wants to track, and will create the list of instances.
+> I might try as well to put inside the Tracker class a function that does the graph. Advantages: Maybe I can have as a default the graphing parameters from the last execution. Disadvantages: I would need to open a python shell, import the file and then run the function.
+> Maybe is more organized to add the attribute of 'type (string)' in species, create the string step by step in the 'init' functions of each class. Say: Proton_SW uses super().__init__ where the string is "Proton - " and then Proton_SW adds "Solar wind".
+> Later I could pass arguments to Tracker as tuples '(species, num)' with 'num' being the number of particles to be tracked.
+
+Meeting:
+
+> How complicated is the mean of transportation and set up such that the figure is not affected by the enviroment before the experiment?
+
+----
+
+
+2020_01_18.txt -PHD --scsi
+
+> I am adding to the class Species_Tracker the following line:
+self.position = species.part_values.position
+Since Python works with references, the burden of memory for the program is just the cost of storing a pointer to a memory address (4 bytes for 32-bit systems and 8 bytes for 64-bits system). Besides, this has the advantage of a pointer, a.k.a. I can modify species.part_values.positions and the changes will appear at self.position too. I am not sure this is the most efficient way of building the code, though.
+> So, I am totally changing the apporach to the particle_tracker treatment. Basically I will have a print function in output, and I will also put these arrays of the indices to be used to track the particles, inside each species that is going to be tracked, alongside a Boolean "tracked" that will indicate whether the species needs the treatment in removeParticles and addParticles. In that way there is no need to pass arguments to the functions. Because the species are being treated as different variables in the main, I will just pass the necessary species to the 'print' function, and I will include and assertion to check whether the species effectively are being traced. In order to reduce the usage of memory and make the code more detachable, I will include a "num_tracked" variable in every Particles of size uint16 (0 to 65535). If it is 0, then the species is not being tracked. If more particles are being tracked, the size of this variables needs to be increased. Keep in mind that the python 'Boolean' object costs 28 bytes whereas the uint16 costs 26. If I want to keep things efficient, the type of the array "trackers" should be the same type as 'max_n' and 'current_n'.
+
+----
+
+
+2020_01_19.txt -PHD --scsi
+
+> When certain tracker is not following a particle, its value is not going to be "numpy.nan" anymore but "species.part_values.max_n". numpy.nan works as a float in Numpy, so I cannot create these arrays of indices having nan inside. On the other hand, these arrays already had the need to handle the biggest possible index, i.e. max_n-1, and max_n as an index will never appear, so I think it is pretty good.
+> The code developed to handle the trackers in removeParticles has been tested in test.py succesfully {And I think is pretty awesome how it works {:D}}.
+> The 'graph_particle_tracker' file works! I would like later to redefine how I choose the particles to be tracked, since right now most of the particles from each species are being selected at the same time, so they are showing a particular group of them and not a more random general group. Also, I would like to break the particle tracker lines once the particle as been deleted and recplaced by another one.
+
+----
+
+
+2020_01_20.txt -PHD --scsi
+
+The code now works in the stage of free stream of particles, still not interacting through electromagnetic forces. Particle Tracker tool is not working well. It seems that after the deletion of particles, the new particles selected are not the same through every step. The highest chances are that my code of saturday night is not working correctly, because even some particles that surely don't disappear, look like they do.
+
+----
+
+
+2020_01_31.txt -PHD --scsi
+
+> I modified 'Field' class by eliminating nPoints and boundaries. It was not necessary since all that information is contained inside mesh, inside pic, and even gives more freedom for later variations of the code.
+
+----
+
+
+2020_02_07.txt -PHD --scsi
+
+> Last time there was work on preparing everything for the poisson solver except for the methods that go inside solver.py.
+> I am following the book "Computer Simulation Using Particles" in the implementation of he Poisson Solver. I am including as an argument the potential of the previous step so that the solution is reached in less time.
+> Spectral radius is the largest absolute value among the eigenvalues of the matrix.
+
+----------------------------------
+
+# Method that computes the electric potential for a 2D rectangular mesh using the method of
+# Successive Over Relaxation with Chebyshev Acceleration (SORCA). The method assumes that the 
+# boundaries has been treated previously and assumes a Dirichlet boundary, so it only calculates values
+# for the inner nodes. If a Neumann condition is desired, then the outer layer nodes are calculated correspondingly 
+# in the later method apply applyElectricBoundary(e_field), not here.
+# rhs is the right-hand-side of the equation Poisson(\phi) = rhs, pot is the potential before being updated, and
+# err is the maximum variation expected between succesives steps to reach solution.
+def poissonSolver_2D_rm_SORCA(mesh, pot, rhs, err = 1e-3):
+
+----------------------------------
+
+----
+
+
+2020_02_08.txt -PHD --scsi
+
+> For the implementation of the derivation of the electric potential I will use the typical second order in the inside of the mesh, and for the border it will be Dirichlet. The derivation in the inside of the mesh will be carried out by the method "derive_2D_rm" in solver.py, whereas the boundary nodes will be handled by the method "applyElectricBoundary" in outer_2D_rectangular.py. It is strange but the boundary will regulate the derivatives through field -> solver; in that way the outer_2D_rm class remains separated from the election of the different methods to derivative, and it makes more sense for the Electric_Field class to handle how to manage the boundary. Also in that way I can store the method of derivatives at the boundaries in solver.py. The derivatives used are Pade 2nd order.
+> The code of the Poisson solver and subsequent calculation of EF has no syntax error. Only remaining include an acceptable initial condition so that the code don't explodes (so far I executed it and it reached the step_limit with a big error).
+
+New methods:
+
+----------------------------------
+
+#       +Computation of Dirichlet boundary condition at every node in location ([ind]). Every row in value ([double]) corresponds to one node in location.
+    def dirichlet(self, location, values):
+
+#       +Derivation of the scalar field potential ([double]) with the method of central differences, at nodes not in the boundaries.
+def derive_2D_rm(mesh, potential):
+
+#       +Pade derivation for the nodes in the boundaries. Normal 2nd order derivation when the boundary is perpendicular to the direction of the derivative.
+#       +Arguments:
+#       +location ([ind]) = location of the boundary nodes to be treated.
+#       +mesh (Outer_2D_Rectangular) = mesh with the information to make the finite difference.
+#       +potential ([double]) = scalar to be derivated.
+#       +Return: [double, double] two-component derivation of potential, with every row being one node of location.
+def derive_2D_rm_boundaries(location, mesh, potential):
+----------------------------------
+
+----
+
+
+2020_02_09.txt -PHD --scsi
+
+> Change of methods' names:
+>> output_vtk -> saveVTK
+>> particle_tracker -> particleTracker
+This, to maintain the protocol of mostly using first-word-lower-case then first-letter-next-words-upper-case for methods.
+
+> Now I am setting the gears for storing the simulation at a given moment as '.pkl' and being able to use it as initial condition for a later simulation. To maintain it relatively modular so that I don't have to modify the methods each time a new species or field is included in the simulation, I will pass as arguments fo the 'savePickle' and 'loadPickle' the instances of classes that are going to be stored or loaded. Accordingly, these methods will receive these theings as argvs* so that they do not need to know which kind of instances or how many instances are going to be stored or loaded. For a particular moment in the construction of the simulation, obviously, the number and order of instances have to be the same for both methods. Also, for the sake of organization, a particular order of the instances is to be followed: ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver). Notice: 1. Plurals because there might be more than one Electric Field, Electron Species, etc. 2. part_solver contains PIC and PIC contains mesh. These latter two as o be unravel later in the main function. Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained. This ordering may be modified in the future as the simulation grows.
+>> Oh, obviously: now a version of the last step of the simulation will be always kept stored, so as to use for 'savePickle'.
+
+> I am also setting things for 'saveVTK' method to function more modular and for using '.vtk' files as initial conditions for new simulations.
+>> 'saveVTK': Since the order doesn't matter here I don't need to put much emphasis into this, but I will follow the same order as with 'savePickle' and 'loadPickle' {Because, who knows?}. That being said, 'saveVTK' will function as these two methods: it will receive an undetermined amount of arguments. Each argument is a class with an 'saveVTK' method that will be called and will return a dictionary containing the string names of the scalar/vector distributions with its corresponding portion of code for storing them in a '.vtk' file. 'saveVTK' will iterate over all the arguments and will prepare everything to be printed in one '.vtk' file.
+>> As such, the 'loadVTK' function to be used for setting the initial condition of the new simulation has to have some knowledge of the things stored at the desired '.vtk' file. This is going to be handled in the same way as with '.pkl' files. 'loadVTK' function will have an undetermined amount of arguments, and the user has to provide the instances of classes desired to be extracted from the '.vtk' file. Each class knows what kind of scalar/vector distribution needs to function properly, and under which name is identified in the '.vtk' file. As such, the general 'loadVTK' function will be calling 'loadVTK' methods of each instance passed as argument.
+
+> Temperature distribution will be included in every species' information through an attribute of 'Particle_In_Mesh'. When implementing, let's not forget that to calculate temperature at a given 'n' step is important to calculate first the mean between the steps 'n+1/2' and 'n-1/2' for velocity. Actually, I should do that for velocity as well for when is to be printed for later post-simulation analysis.
+
+> To easily handle variations in the simulation regarding the number of species and fields simulated, I will create a class in 'main.py' called 'System'. This 'System' class is simply a wrapper for all the instances of the different classes that are necessary for the simulation to run. It will even contain 'ts' as an atribute. It will have two methods: 'arrangePickle' and 'arrangeVTK', which return the necessary attributes for saving and loading, in the correct order. I will write this code in 'main.py' to keep the  manipulation of the system and the simulation in one file, for ease of modification.
+
+----
+
+
