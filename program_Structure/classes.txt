@@ -3,6 +3,27 @@
 # NOTE: The new additions and changes, as they occur, also have to be reported in the notes.
 ## ---------------------------------------------------------------------------------------------------------------
 
+---------------------------------------------------------------------------------------------------------------------------------------
+
+System:
+
+Definition = Is the class that contains every variable and class necessary for the simulation to be executed.
+Attributes:
+	+ts (int) = Timestep of the simulation.
+	+The rest of the variables will change with the simulation, but normally, there are:
+	+mesh (Mesh).
+	+pic (PIC).
+	+fields (Field) = Probably several of them.
+	+species (species) = Probably several of them.
+	+part_solver (Motion_Solver).
+Methods:
+	+Remark about init(): It will "declare" the attributes necessary for the simulation to run. The actual assignment of atributes
+		to instances of each class will occur during the 'initial condition' section of 'main.py'.
+	+arrangePickle() : Variable = Return the attributes necessary to store the state of the system, in the order required.
+	+arrangeVTK() : Variable = Return the atrributes for save and load of/from VTK files, in the "order required".
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
 Mesh (Abstract)(Association between Mesh and PIC):
 
 Definition = Defines the type of mesh.
@@ -256,9 +277,9 @@ Methods stored here for convenience:
    	++n_vel ([double,double]) = For each node in location, the thermal velocity (for a the MB distribution) that the inserted particles will represent. Same order as delta_n.
 	++shit_vel ([double, double]) = For each node in location, an added velocity that does not come from temperature origin (like solaw wind average speed.
 
-	+injectParticlesDummyBox([int] location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = Inject the particles in location indices by creating dummy boxes around them, creating particles
-		inside of them, moving the particles, and then adding the ones that entered into the computational domain.
-
+    +injectParticlesDummyBox([int] location, PIC pic, Field field, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = 
+     	Inject the particles in location indices by creating dummy boxes around them, creating particles
+    	inside of them, moving the particles, and then adding the ones that entered into the computational domain.
     +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
     +removeParticles(Species species, [ind] ind) = Removes the particles from species stored at 'ind' positions.
     +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.

@@ -469,3 +469,78 @@ This, to maintain the protocol of mostly using first-word-lower-case then first-
 ----
 
 
+2020_02_10.txt -PHD --scsi
+
+> I realized that every time I am injecting particles into the domain, I have to rewind the velocity to math the LeapFrog condition. I corrected that on InjectParticlesDummyBox. I also noticed that this is the case only for LeapFrog, but different time integrators may require different estrategies for making the particles 'ready' for advancing on time the first time. Because of that, the method 'initialConfiguration' of the class 'Motion_Solver' is the one that is supposed to deal with that. To make it useful for "injecting-particles" methods in different stages of the simulation, I removed the 'updateMeshValues' responsability. New Adjustments:
+
+----------------------------------
+
+#       +initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
+#           So far just E, so [Field]->Field.
+    def initialConfiguration(self, species, field):
+
+----------------------------------
+
+#       +injectParticlesDummyBox([int] location, PIC pic, Field field, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = 
+#               Inject the particles in location indices by creating dummy boxes around them, creating particles
+#       	inside of them, moving the particles, and then adding the ones that entered into the computational domain.
+    def injectParticlesDummyBox(self, location, part_solver, field, species, delta_n, n_vel, shift_vel):
+
+----------------------------------
+
+> The plan for 'saveVTK' and 'loadVTK' is to save is to use as the names of the fields in VTK files, the actual names of the attributes in the code. The function, though declared in 'Species', will be handled by 'Particles_In_Mesh'. 'Species' will add the prefix of the type of particle.
+
+> Several changes were done to the main.py file to include the new initial conditions. Shown below.
+
+----------------------------------
+
+## ---------------------------------------------------------------------------------------------------------------
+# Initiating data structures for the system
+## ---------------------------------------------------------------------------------------------------------------
+
+
+#System:
+#
+#Definition = Is the class that contains every variable and class necessary for the simulation to be executed.
+#Attributes:
+#	+ts (int) = Timestep of the simulation.
+#	+The rest of the variables will change with the simulation, but normally, there are:
+#	+mesh (Mesh).
+#	+pic (PIC).
+#	+fields (Field) = Probably several of them.
+#	+species (species) = Probably several of them.
+#	+part_solver (Motion_Solver).
+#Methods:
+#	+Remark about init(): It will "declare" the attributes necessary for the simulation to run. The actual assignment of atributes
+#		to instances of each class will occur during the 'initial condition' section of 'main.py'.
+#	+arrangePickle() : Variable = Return the attributes necessary to store the state of the system, in the order required.
+#	+arrangeVTK() : Variable = Return the atrributes for save and load of/from VTK files, in the "order required".
+...
+
+#Initialization of the system and the previous step
+...
+
+## ---------------------------------------------------------------------------------------------------------------
+# Initial condition
+## ---------------------------------------------------------------------------------------------------------------
+# Initial conditions are selected with a number next to the file when the program is executed, e.g. 'python3 main.py 2'.
+# If the initial condition requires more arguments, they are written here in the file.
+# Listed Initial conditions:
+# 1: Basic empty system.
+# 2: Execution from a VTK file.
+# 3: Execution from a Pickle file.
+...
+
+## ---------------------------------------------------------------------------------------------------------------
+# Set up of the system before the Main loop
+## ---------------------------------------------------------------------------------------------------------------
+
+## ---------------------------------------------------------------------------------------------------------------
+# Main loop
+## ---------------------------------------------------------------------------------------------------------------
+
+----------------------------------
+
+----
+
+

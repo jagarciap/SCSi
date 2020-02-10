@@ -12,7 +12,7 @@ import pdb
 
 #NOTE: to keep the good detachment and modularity of the program, this function can be generalized easily. Each class that has something to print has a print function, which returns a dictionary.
 #       then, here, I just need to unravel and packed everything again.
-def outputVTK(ts, mesh, electrons, protons, e_field):
+def saveVTK(ts, mesh, electrons, protons, e_field):
     #Creating domain
     nx = mesh.nx
     ny = mesh.ny
@@ -35,6 +35,16 @@ def outputVTK(ts, mesh, electrons, protons, e_field):
         'e_field': (numpy.reshape(copy.copy(e_field.field[:,0]),(nx,ny,1), order = 'F'),\
                 numpy.reshape(copy.copy(e_field.field[:,1]),(nx,ny,1), order = 'F'), \
                 numpy.zeros((nx,ny,1)))})
+
+#       +Method that loads the information of the system from a '.vtk' and stores it in the arguments *args.
+#       +Structure to be followed in *args:
+#       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals.
+#       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
+def loadVTK(filename, *args):
+    #Preparing path
+    cwd = os.path.split(os.getcwd())[0]
+    filename = cwd+'/initial_conditions/'+filename
+
 
 # The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
 #   specie1.x \t specie1.y \t specie2.x etc. Each row is a different particle for a particular species.
@@ -78,10 +88,10 @@ def savePickle(*args):
 #       +Structure to be followed in *args:
 #       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver).
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
-def load_state(filename, *args):
+def loadPickle(filename, *args):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
-    filename = cwd+'/previous_executions/'+filename
+    filename = cwd+'/initial_conditions/'+filename
     with open (filename, 'rb') as pinput:
         for arg in args:
             arg = pickle.load(pinput)

@@ -8,7 +8,6 @@ import numpy
 #       +pic_slv (PIC) = PIC solver.
 #Methods:
 #       +initialConfiguration(Species, [Field]) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
-#           it also takes care of the first update of Particle values in mesh. 
 #	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh.
 #       +updateParticles(Species, [Field]) = Particle advance in time.
@@ -17,7 +16,7 @@ class Motion_Solver(object):
         self.pic_slv = pic_slv
 
     def initialConfiguration(self, species, fields):
-        self.updateMeshValues(species)
+        pass
 
     def advance(self, species, fields):
         pass
@@ -48,10 +47,9 @@ class Leap_Frog(Motion_Solver):
         super().__init__(pic_slv)
 
 #       +initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
-#           it also takes care of the first update of Particle values in mesh. So far just E, so [Field]->Field.
+#           So far just E, so [Field]->Field.
     def initialConfiguration(self, species, field):
         self.rewindVelocity(species, field)
-        self.updateMeshValues(species)
 
 #       +rewindVelocity(species, field) = Take the velocity of particles half a step back in time for 'field' electric field.
     def rewindVelocity(self, species, field):
