@@ -1,6 +1,8 @@
 # Main file of the program
 import copy
 import numpy
+import pdb
+import sys
 numpy.seterr(invalid='ignore', divide='ignore', over = 'raise')
 
 import constants as c
@@ -38,12 +40,12 @@ import output as out
 class System(object):
     def __init__(self):
         self.ts = 0
-        self.mesh = None
-        self.pic = None
-        self.e_field = None
-        self.electrons = None
-        self.protons = None
-        self.part_solver = None
+        self.mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
+        self.pic = PIC_2D_rm1o(self.mesh)
+        self.part_solver = Leap_Frog(self.pic)
+        self.electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, self.mesh.nPoints, c.NUM_TRACKED)
+        self.protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, self.mesh.nPoints, c.NUM_TRACKED)
+        self.e_field = Constant_Electric_Field(self.pic, c.DIM)
 
     def arrangePickle(self):
         return self.ts, self.e_field, self.electrons, self.protons, self.part_solver
@@ -66,21 +68,20 @@ old_system = copy.deepcopy(system)
 # 3: Execution from a Pickle file.
 
 if sys.argv[1] == '1':
-
-    system.mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
-    system.pic = PIC_2D_rm1o(system.mesh)
-    system.e_field = Constant_Electric_Field(system.pic, c.DIM)
-    system.electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, system.mesh.nPoints, c.NUM_TRACKED)
-    system.protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, system.mesh.nPoints, c.NUM_TRACKED)
-    system.part_solver = Leap_Frog(system.pic)
+    pass
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
     filename = '.vtk'
-    out.loadVTK(filename, system.arrangeVTK())
-    system.mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
-    system.pic = PIC_2D_rm1o(system.mesh)
-    system.part_solver = Leap_Frog(system.pic)
+    out.loadVTK(filename, system.mesh, *system.arrangeVTK())
+
+elif sys.argv[1] == '3':
+    #File to be used as source of initial condition
+    filename = '.pkl'
+    out.loadPickle(filename, *arrangePickle())
+
+else:
+    raise("Somehing is wrong here")
 
 
 ## ---------------------------------------------------------------------------------------------------------------
@@ -104,40 +105,57 @@ for boundary in system.mesh.boundaries:
     boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.protons, p_n, thermal_p_vel, drift_p_vel)
 
 #Half-step speed recoil to meet Leap-frog condition
-part_solver.initialConfiguration(system.protons, system.e_field)
-part_solver.initialConfiguration(system.electrons, system.e_field)
-part_solver.updateMeshValues(system.protons)
-part_solver.updateMeshValues(system.electrons)
+system.part_solver.updateMeshValues(system.protons)
+system.part_solver.updateMeshValues(system.electrons)
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Main loop
 ## ---------------------------------------------------------------------------------------------------------------
 
-while system.ts < c.NUM_TS:
-    print('ts = ', system.ts)
-
-    # Electron motion
-    for te in range(c.ELECTRON_TS):
-        print('te = ', te)
-        system.e_field.computeField([system.protons, system.electrons])
-        system.part_solver.advance(system.electrons, system.e_field)
-        # Applying field borders and injecting electrons
+# try/except block to capture any error and save before the step before the crash. It also allows the simulation to be stopped.
+try:
+    while system.ts < c.NUM_TS:
+        print('ts = ', system.ts)
+    
+        # Electron motion
+        for te in range(c.ELECTRON_TS):
+            print('te = ', te)
+            system.e_field.computeField([system.protons, system.electrons])
+            system.part_solver.advance(system.electrons, system.e_field)
+            # Applying field borders and injecting electrons
+            for boundary in system.mesh.boundaries:
+                boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.electrons, e_n, thermal_e_vel, drift_e_vel)
+    
+        #Proton motion
+        system.part_solver.advance(system.protons, system.e_field)
         for boundary in system.mesh.boundaries:
-            boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.electrons, e_n, thermal_e_vel, drift_e_vel)
+            boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.protons, p_n, thermal_p_vel, drift_p_vel)
+    
+        #Output vtk
+        if system.ts%10 == 0:
+            out.saveVTK(system.mesh, *system.arrangeVTK())
+        if system.ts%1 == 0:
+            out.particleTracker(system.ts, system.protons, system.electrons)
+    
+        #Updating previous state
+        old_system = copy.deepcopy(system)
+    
+        #Advance in timestep
+        system.ts += 1
 
-    #Proton motion
-    system.part_solver.advance(system.protons, system.e_field)
-    for boundary in system.mesh.boundaries:
-        boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.protons, p_n, thermal_p_vel, drift_p_vel)
+except KeyboardInterrupt:
+    out.savePickle(*old_system.arrangePickle())
+    print('Process aborted')
+    print('Previous state succesfully saved')
+    sys.exit()
+except:
+    out.savePickle(*old_system.arrangePickle())
+    print('Unexpected error')
+    print('Previous state succesfully saved')
+    raise
+    pdb.set_trace()
 
-    #Output vtk
-    if system.ts%10 == 0:
-        out.savevtk(system.arrangeVTK())
-    if system.ts%1 == 0:
-        out.particle_tracker(system.ts, system.protons, system.electrons)
-
-    #Updating previous state
-    old_system = copy.deepcopy(system)
-
-    #Advance in timestep
-    system.ts += 1
+out.savePickle(*system.arrangePickle())
+print('Simulation finished')
+print('Last state succesfully saved')
+sys.exit()

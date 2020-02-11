@@ -38,6 +38,11 @@ Methods:
            depending on the actual type of mesh subclass used.
 	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
 	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
+    +vtkOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
+        The result is returned as a new array.
+    +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
+    +vtkReader(): Reader = Return the reader from module vtk that is able to read the vtk file.
+	+saveVTK(string filename, dict dictionary) = It calls the appropiate method in 'vtk' module to print the information of the system in a '.vtk' file.
 	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 
 --------------------------------------------
@@ -80,7 +85,7 @@ Definition = PIC class for rm10 ('r'ectangular 'm'esh, '1'st 'o'rder implementat
 Attributes:
 	+PIC class attributes.
 Methods:
-+Implementation of PIC class methods.
+	+Implementation of PIC class methods.
 	+scatterDensity (Species) = return densities of that species in every node of the mesh.
 	+scatterVelocity (Species) = return velocities of that species in every node of the mesh.
 	+scatter_flux = return flux of particles of that species into every indicated node (not all the mesh).
@@ -92,6 +97,7 @@ Species (Abstract):
 
 Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
 Attributes:
+	+name (string) = some string descriptor that indicate the type/source of particles.
 	+dt (double) = timestep for the motion of the particle.
 	+q (double) = charge of the species.
 	+m (double) = mass of the species.
@@ -104,6 +110,10 @@ Attributes:
 	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
 Notes:
        +__init__() receives nPoints from mesh
+       +saveVTK(Mesh mesh): dictionary = Return the attributes of the Species to be printed in the VTK file.
+           The process is handled through Particles_In_Mesh.
+       +loadVTK(Mesh mesh, output) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
+           The process is handled through Particles_In_Mesh.
 
 --------------------------------------------
 
@@ -111,7 +121,6 @@ Proton (Inherits from Species):
 
 Definition = Species that take care of protons.
 Attributes:
-	+type (string) = some string descriptor that indicate the type/source of protons.
 	+Species attributes.
 
 --------------------------------------------
@@ -129,7 +138,6 @@ Electron (Inherits from Species):
 
 Definition = Species that take care of electrons.
 Attributes:
-	+type (string) = some string descriptor that indicate the type/source of electrons.
 	+Species attributes.
 
 --------------------------------------------
@@ -147,7 +155,6 @@ Ion (Inherits from Species):
 
 Definition = Species that take care of ions.
 Attributes:
-	+type (string) = some string descriptor that indicate the type of ion.
 	+Species attributes.
 
 --------------------------------------------
@@ -156,7 +163,6 @@ Neutral (Inherits from Species):
 
 Definition = Species that take care of neutrals.
 Attributes:
-	+type (string) = some string descriptor that indicate the type of neutrals.
 	+Species attributes.
 
 --------------------------------------------
@@ -169,6 +175,10 @@ Attributes:
 	+density ([double]) = Density values at each node.
 	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
 	+residuals([double]) = remnants from injection of particles at the previous step.
+Methods:
+	+saveVTK(Mesh mesh, string name): dictionary = Return the attributes of the Species to be printed in the VTK file.
+	+loadVTK(Mesh mesh, output, string name) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
+
 
 --------------------------------------------
 
@@ -199,12 +209,17 @@ Field (Abstract):
 
 Definition = Indicate the attributes and methods that all fields have to implement. The fields obtain the functions to compute the fields from 'solver.py'
 Attributes:
+	+name (string) = some string that describes the source and type of the field (created by the interaction plasma-spacecraft, user-defined, constant, etc.)
 	+pic (PIC) = Class that contains PIC methods.
 	+field ([double, double]) = components (columns) of field at each node.
 Methods:
 	+__init__(...) = This function, for each subclass, will take care of the initial condition of the field.
 	+computeField([Species] species) = Computes the updated field values.
 	+fieldAtParticles([double,double] position) [double,double] = return an array indicating by component (columns) and particles (rows) the field at every position.
+    +saveVTK(Mesh mesh): dictionary = Return the attributes of field to be printed in the VTK file.
+        The process is handled inside each particular field, and the final result can be constructed from the output of different subclasses.
+    +loadVTK(Mesh mesh, output) = Takes information of the field from a VTK file through 'output' and stores it in the corresponding attributes.
+        The process is handled inside each particular field, and the final result can be constructed from the output of different subclasses.
 
 --------------------------------------------
 

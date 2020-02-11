@@ -5,7 +5,7 @@ import numpy
 #Definition = Class that shows which methods and attributes need to have all motion solvers.
 #Attributes:
 #	+type (string) = string indicating the type of scheme.
-#       +pic_slv (PIC) = PIC solver.
+#       +pic (PIC) = PIC solver.
 #Methods:
 #       +initialConfiguration(Species, [Field]) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
 #	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
@@ -13,7 +13,7 @@ import numpy
 #       +updateParticles(Species, [Field]) = Particle advance in time.
 class Motion_Solver(object):
     def __init__(self, pic_slv):
-        self.pic_slv = pic_slv
+        self.pic = pic_slv
 
     def initialConfiguration(self, species, fields):
         pass
@@ -62,13 +62,13 @@ class Leap_Frog(Motion_Solver):
 
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
     def updateMeshValues(self, species):
-        if species.type == "Electron - Solar wind" or species.type == "Proton - Solar wind":
-            self.pic_slv.scatterDensity(species)
-            self.pic_slv.scatterSpeed(species)
+        if species.name == "Electron - Solar wind" or species.name == "Proton - Solar wind":
+            self.pic.scatterDensity(species)
+            self.pic.scatterSpeed(species)
 
 #       +updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
     def updateParticles(self, species, field):
         np = species.part_values.current_n
         species.part_values.velocity[:np,:] += species.q_over_m*species.dt*field.fieldAtParticles(species.part_values.position[:np,:])
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
-        self.pic_slv.mesh.boundaries[0].applyParticleBoundary(species)
+        self.pic.mesh.boundaries[0].applyParticleBoundary(species)

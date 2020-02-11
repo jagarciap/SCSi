@@ -45,7 +45,7 @@ class Outer_2D_Rectangular(Boundary):
         # Eliminating particles
         super().removeParticles(species,ind)
         count2 = numpy.shape(ind)[0]
-        print('Number of {} eliminated:'.format(species.type), count2)
+        print('Number of {} eliminated:'.format(species.name), count2)
 
 #       +createDummyBox([ind]location, PIC pic, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = create the dummy boxes with particles in them.
 #NOTE: I am not sure if addParticles is computationally demanding for other reason apart from the costs on numpy operations.

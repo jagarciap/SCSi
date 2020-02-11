@@ -2,6 +2,8 @@
 import copy
 import numpy
 import os
+import pdb
+import vtk
 
 import evtk.hl as vtk
 
@@ -21,6 +23,10 @@ import Boundaries.outer_2D_rectangular as ob
 #           depending on the actual type of mesh subclass used.
 #	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
 #	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
+#       +vtkOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
+#           The result is returned as a new array.
+#       +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
+#       +vtkReader(): Reader = Return the reader from module vtk that is able to read the vtk file.
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 class Mesh (object):
     def __init__(self):
@@ -39,6 +45,9 @@ class Mesh (object):
         pass
 
     def indexToArray(self, ind):
+        pass
+
+    def vtkOrdering(self, array):
         pass
 
     def print(self):
@@ -119,6 +128,40 @@ class Mesh_2D_rm (Mesh):
     def indexToArray(self, ind):
         return ind[:,1]*self.nx+ind[:,0]
 
+#       +vtkOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
+#           The result is returned as a new array.
+    def vtkOrdering(self, array):
+        dims = numpy.shape(array)
+        if len(dims) == 1:
+            return array.reshape((self.nx, self.ny, 1), order = 'F')
+        else:
+            tpl = tuple(numpy.reshape(copy.copy(array[:,i]),(self.nx, self.ny, 1), order = 'F') for i in range(dims[1]))
+            if len(tpl) < 3:
+                for i in range (3-len(tpl)):
+                    tpl += (numpy.zeros_like(array[:,0].reshape((self.nx,self.ny,1))),)
+            return tpl
+
+#       +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
+    def reverseVTKOrdering(self, array):
+        dims = numpy.shape(array)
+        if len(dims) == 1:
+            return array.reshape((self.nPoints), order = 'F')
+        else:
+            return array.reshape((self.nPoints, 3), order = 'F')[:,:2]
+
+#       +vtkReader(): Reader = Return the reader from module vtk that is able to read the vtk file.
+    def vtkReader(self):
+        return vtk.vtkXMLRectilinearGridReader()
+
+#       +saveVTK(string filename, dict dictionary) = It calls the appropiate method in 'vtk' module to print the information of the system in a '.vtk' file.
+    def saveVTK(self, filename, dictionary):
+        i = numpy.arange(0, self.nx, dtype ='int16')
+        j = numpy.arange(0, self.ny, dtype ='int16')
+        ind = numpy.arange(0, self.nPoints, dtype = 'uint16')
+        temp = numpy.zeros((1), dtype = 'int16')
+
+        vtk.gridToVTK(filename, i, j, temp, pointData = dictionary)
+
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
     def print(self):
         i = numpy.arange(0, self.nx, dtype ='int16')
@@ -129,5 +172,6 @@ class Mesh_2D_rm (Mesh):
 
         cwd = os.path.split(os.getcwd())[0]
         vtkstring = cwd+'/results/mesh'
-        vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.volumes.reshape((self.nx, self.ny, 1), order = 'F'),\
-                'positions': (numpy.reshape(copy.copy(pos[:,0]),(self.nx,self.ny,1), order = 'F'), numpy.reshape(copy.copy(pos[:,1]),(self.nx,self.ny,1), order = 'F'), numpy.zeros((self.nx,self.ny,1)))})
+        vtk.gridToVTK(vtkstring, i, j, temp, pointData = {'volumes': self.vtkOrdering(self.volumes),\
+                'positions': self.vtkOrdering(pos)})
+                #'positions': (numpy.reshape(copy.copy(pos[:,0]),(self.nx,self.ny,1), order = 'F'), numpy.reshape(copy.copy(pos[:,1]),(self.nx,self.ny,1), order = 'F'), numpy.zeros((self.nx,self.ny,1)))})

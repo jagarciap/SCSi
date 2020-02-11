@@ -1,10 +1,12 @@
 #Data structures that define the information of the species in general
+from vtk.util.numpy_support import vtk_to_numpy
 import numpy
 
 #Species (Abstract):
 #
 #Definition = This abstract class is the wrapper for everything related to particles. Any species of particles inherits from this class.
 #Attributes:
+#	+name (string) = some string descriptor that indicate the type/source of particles.
 #       +dt (double) = timestep for the motion of the particle.
 #	+q (double) = charge of the species.
 #	+m (double) = mass of the species.
@@ -17,8 +19,13 @@ import numpy
 #	+part_values (Particles) = oject to store anything related to the actual particles in physical space.
 #Notes:
 #       +__init__() receives nPoints from mesh
+#       +saveVTK(Mesh mesh): dictionary = Return the attributes of the Species to be printed in the VTK file.
+#           The process is handled through Particles_In_Mesh.
+#       +loadVTK(Mesh mesh, output) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
+#           The process is handled through Particles_In_Mesh.
 class Species(object):
-    def __init__(self, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
+    def __init__(self, name, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
+        self.name = name
         self.dt = dt
         self.q = n_q
         self.m = n_m
@@ -30,6 +37,12 @@ class Species(object):
         self.mesh_values = Particles_In_Mesh(n_nPoints, n_vel_dim)
         self.part_values = Particles(n_max_n, n_pos_dim, n_vel_dim, n_num_tracked)
 
+    def saveVTK(self, mesh):
+        return self.mesh_values.saveVTK(mesh, self.name)
+
+    def loadVTK(self, mesh, output):
+        return self.mesh_values.loadVTK(mesh, output, self.name)
+
 
 #Particles_In_Mesh (Abstract)(Composition with Species):
 #
@@ -39,12 +52,23 @@ class Species(object):
 #	+density ([double]) = Density values at each node.
 #	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
 #       +residuals([double]) = remnants from injection of particles at the previous step.
+#Methods:
+#       +saveVTK(Mesh mesh, string name): dictionary = Return the attributes of the Species to be printed in the VTK file.
+#       +loadVTK(Mesh mesh, output, string name) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
 class Particles_In_Mesh(object):
     def __init__(self, n_nPoints, n_vel_dim):
         self.nPoints = n_nPoints
         self.density = numpy.zeros((self.nPoints))
         self.velocity = numpy.zeros((self.nPoints, n_vel_dim))
         self.residuals = numpy.zeros((self.nPoints))
+
+    def saveVTK(self, mesh, name):
+        return {name+"-density" : mesh.vtkOrdering(self.density),\
+                name+"-velocity": mesh.vtkOrdering(self.velocity)}
+
+    def loadVTK(self, mesh, output, name):
+        self.density = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
+        self.velocity = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-velocity")))
 
 
 #Particles(Composition with Species):

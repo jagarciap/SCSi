@@ -544,3 +544,23 @@ This, to maintain the protocol of mostly using first-word-lower-case then first-
 ----
 
 
+2020_02_11.txt -PHD --scsi
+
+> Now the name of the species is called 'name', not 'type', and is stored directly in 'Species' class. The string is constructed along the constructors of subclasses. Type of species add the first word, and source adds the second. e.g. for protons in the solar wind, 'Proton' class receives " - Solar wind" and returns "Proton - Solar wind".
+> The class 'Field' and its subclasses suffered the same change. Now 'type'->'name' and the attribute is found in 'Field' but constructed through classes.
+> saveVTK and loadVTK were implemented for 'Species' and 'Field' under the same signature, to maintain saveVTK and loadVTK functions in output generalized. Nevertheless, they function different. In Species, the bulk of the process is handled y 'Particle_In_Mesh' and 'Species' only functions as a tunnel, also providing 'name'. In 'Field', functions are called directly from the most bottom-level class were they are implemented, and functions are constructed fractionally aong different levels of classes.
+> In order to maintain 'Field' and 'Species' independent of the type of mesh, and making 'Mesh' the sole handler of the type of mesh, three new functions were included for the process of VTK I/O:
+
+----------------------------------
+
+#       +vtkOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
+#           The result is returned as a new array.
+#       +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
+#       +vtkReader(): Reader = Return the reader from module vtk that is able to read the vtk file.
+#		+saveVTK(string filename, dict dictionary) = It calls the appropiate method in 'vtk' module to print the information of the system in a '.vtk' file.
+
+----------------------------------
+
+----
+
+

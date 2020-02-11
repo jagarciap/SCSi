@@ -73,7 +73,7 @@ class Boundary(object):
                 species.part_values.trackers[ind_new[:ind2]] = numpy.arange(init, end, step, dtype = numpy.uint32)[:,None]
 
 
-#       +Eliminates the particles  denoted with the indices ind. 
+#       +Eliminates the particles denoted with the indices ind. 
     def removeParticles(self, species, ind):
         #Eliminating particles
         temp = species.part_values.current_n
@@ -158,17 +158,20 @@ class Boundary(object):
 #       	inside of them, moving the particles, and then adding the ones that entered into the computational domain.
     def injectParticlesDummyBox(self, location, part_solver, field, species, delta_n, n_vel, shift_vel):
         # Creating temporary species
-        ghost = Species(species.dt, species.q, species.m, species.debye, species.spwt, int(species.part_values.max_n/10), species.pos_dim, species.vel_dim, species.mesh_values.nPoints)
+        ghost = Species("temporary species", species.dt, species.q, species.m, species.debye, species.spwt, int(species.part_values.max_n/10), species.pos_dim, species.vel_dim, species.mesh_values.nPoints)
         self.createDummyBox(location, part_solver.pic, ghost, delta_n, n_vel, shift_vel)
-        np = ghost.part_values.max_n
+        np = ghost.part_values.current_n
         #Entering particles into the mesh and adjusting them according to motion_solver
         ghost.part_values.position[:np,:] += ghost.part_values.velocity[:np,:]*ghost.dt
         ind = numpy.flatnonzero(numpy.logical_not(numpy.logical_and(ghost.part_values.position[:np,0] > part_solver.pic.mesh.xmin,\
                                 numpy.logical_and(ghost.part_values.position[:np,0] < part_solver.pic.mesh.xmax,\
                                 numpy.logical_and(ghost.part_values.position[:np,1] > part_solver.pic.mesh.ymin, ghost.part_values.position[:np,1] < part_solver.pic.mesh.ymax)))))
         self.removeParticles(ghost, ind)
+        #Test
+        #np = ghost.part_values.current_n
+        #if ghost.part_values.position[:n,
         part_solver.initialConfiguration(ghost, field)
         #Adding particles
-        self.addParticles(species, ghost.part_values.position, ghost.part_values.velocity)
-        print("Injected particles: ",len(ghost.part_values.current_n))
-        print("Total {}".format(species.type),": ", species.part_values.current_n)
+        self.addParticles(species, ghost.part_values.position[:ghost.part_values.current_n,:], ghost.part_values.velocity[:ghost.part_values.current_n,:])
+        print("Injected particles: ",ghost.part_values.current_n)
+        print("Total {}".format(species.name),": ", species.part_values.current_n)

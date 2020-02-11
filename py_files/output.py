@@ -9,41 +9,34 @@ import pickle
 import constants as c
 import pdb
 
-
-#NOTE: to keep the good detachment and modularity of the program, this function can be generalized easily. Each class that has something to print has a print function, which returns a dictionary.
-#       then, here, I just need to unravel and packed everything again.
-def saveVTK(ts, mesh, electrons, protons, e_field):
-    #Creating domain
-    nx = mesh.nx
-    ny = mesh.ny
-    i = numpy.arange(0, nx, dtype ='int16')
-    j = numpy.arange(0, ny, dtype ='int16')
-    temp = numpy.zeros((1), dtype = 'int16')
-
-    #Files created
+#       +Method that prepares the system to be printed in a '.vtk' file.
+#       +It receives in args[0] the timestep, and the rest of args are objects with functions saveVTK that provide dictionaries of the attributes to be stored in the file.
+#       +The actual printing is handled by the mesh.
+def saveVTK(mesh, *args):
+    #Preparing file
     cwd = os.path.split(os.getcwd())[0]
-    vtkstring = cwd+'/results/ts{:d}'.format(ts)
-    vtk.gridToVTK(vtkstring, i, j, temp, pointData = {
-        'n_e': electrons.mesh_values.density.reshape((nx, ny, 1), order = 'F'),\
-        'e_vel': (numpy.reshape(copy.copy(electrons.mesh_values.velocity[:,0]),(nx,ny,1), order = 'F'),\
-                numpy.reshape(copy.copy(electrons.mesh_values.velocity[:,1]),(nx,ny,1), order = 'F'), \
-                numpy.zeros((nx,ny,1))),\
-        'n_p': protons.mesh_values.density.reshape((nx, ny, 1), order = 'F'),\
-        'p_vel': (numpy.reshape(copy.copy(protons.mesh_values.velocity[:,0]),(nx,ny,1), order = 'F'),\
-                numpy.reshape(copy.copy(protons.mesh_values.velocity[:,1]),(nx,ny,1), order = 'F'), \
-                numpy.zeros((nx,ny,1))),\
-        'e_field': (numpy.reshape(copy.copy(e_field.field[:,0]),(nx,ny,1), order = 'F'),\
-                numpy.reshape(copy.copy(e_field.field[:,1]),(nx,ny,1), order = 'F'), \
-                numpy.zeros((nx,ny,1)))})
+    vtkstring = cwd+'/results/ts{:d}'.format(args[0])
+    #Creating dictionary
+    dic = {}
+    for arg in args[1:]:
+        dic.update(arg.saveVTK(mesh))
+    #Executing through mesh
+    mesh.saveVTK(vtkstring, dic)
 
 #       +Method that loads the information of the system from a '.vtk' and stores it in the arguments *args.
 #       +Structure to be followed in *args:
 #       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals.
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
-def loadVTK(filename, *args):
+def loadVTK(filename, mesh, *args):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
     filename = cwd+'/initial_conditions/'+filename
+    reader = mesh.vtkReader()
+    reader.SetFileName(filename)
+    reader.Update()
+    output = reader.GetOutput()
+    for arg in args[1:]:
+        arg.loadVTK(mesh, output)
 
 
 # The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
@@ -63,7 +56,7 @@ def particleTracker(ts, *args):
     for i in range(len(args)):
         ind = numpy.argwhere(args[i].part_values.trackers != args[i].part_values.max_n)
         narray[ind, args[i].pos_dim*i:args[i].pos_dim*(i+1)] = args[i].part_values.position[args[i].part_values.trackers[ind],:]
-        nHeader += args[i].type + '\t'
+        nHeader += args[i].name + '\t'
 
     cwd = os.path.split(os.getcwd())[0]
     workfile = cwd+'/particle_tracker/ts={:05d}.dat'.format(ts)
@@ -78,7 +71,7 @@ def savePickle(*args):
     #Creating file's name
     cwd = os.path.split(os.getcwd())[0]
     time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
-    string = cwd+'/previous_executions/sys_ts={:d}_'.format(ts)+time+'.pkl'
+    string = cwd+'/previous_executions/sys_ts={:d}_'.format(args[0])+time+'.pkl'
     #Storing information
     with open (string, 'wb') as output:
         for arg in args:
