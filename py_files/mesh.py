@@ -5,7 +5,7 @@ import os
 import pdb
 import vtk
 
-import evtk.hl as vtk
+import evtk.hl as evtk
 
 import Boundaries.outer_2D_rectangular as ob
 
@@ -23,10 +23,12 @@ import Boundaries.outer_2D_rectangular as ob
 #           depending on the actual type of mesh subclass used.
 #	+arrayToIndex([ind] array): [int, int] = For the indexes in the 1D array, obtain the indexes used for the particular mesh.
 #	+indexToArray([ind, ind] index): [int] = For the indexes used for the particular mesh, obtain the 1D version for the array.
-#       +vtkOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
+#       +reverseVTKOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
 #           The result is returned as a new array.
 #       +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
 #       +vtkReader(): Reader = Return the reader from module vtk that is able to read the vtk file.
+#       +saveVTK(string filename, dict dictionary) = It calls the appropiate method in 'vtk' module to print the information of the system in a '.vtk' file.
+#       +loadSpeciesVTK(self, species) = It creates particles around every node that can match the preoladed density and velocity of that node. This will depend on each type of mesh.
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
 class Mesh (object):
     def __init__(self):
@@ -48,6 +50,18 @@ class Mesh (object):
         pass
 
     def vtkOrdering(self, array):
+        pass
+
+    def reverseVTKOrdering(self, array):
+        pass
+
+    def vtkReader(self):
+        pass
+
+    def saveVTK(self, filename, dictionary):
+        pass
+
+    def loadSpeciesVTK(self, species):
         pass
 
     def print(self):
@@ -141,7 +155,7 @@ class Mesh_2D_rm (Mesh):
                     tpl += (numpy.zeros_like(array[:,0].reshape((self.nx,self.ny,1))),)
             return tpl
 
-#       +vtkOrdering(array): array = The array received as argument comes with vtk ordering and is reshaped to be stored properly in the code.
+#       +reverseVTKOrdering(array): array = The array received as argument is ordered in such a way it can be stored ina VTK file.
     def reverseVTKOrdering(self, array):
         dims = numpy.shape(array)
         if len(dims) == 1:
@@ -160,7 +174,27 @@ class Mesh_2D_rm (Mesh):
         ind = numpy.arange(0, self.nPoints, dtype = 'uint16')
         temp = numpy.zeros((1), dtype = 'int16')
 
-        vtk.gridToVTK(filename, i, j, temp, pointData = dictionary)
+        evtk.gridToVTK(filename, i, j, temp, pointData = dictionary)
+
+#       +loadSpeciesVTK(self, species) = It creates particles around every node that can match the preoladed density and velocity of that node. This will depend on each type of mesh.
+    def loadSpeciesVTK(self, species):
+        #Preparing things for numpy functions use
+        particles = species.mesh_values.density*self.volumes/species.spwt
+        ind = numpy.arange(self.nPoints)
+        index = numpy.repeat(ind, particles)
+        #Setting up positions
+        pos = self.getPosition(ind)[index]
+        random = numpy.random.rand(numpy.shape(pos))
+        random += numpy.where(random == 0, 1e-3, 0)
+        pos[:,0] += numpy.where(index%self.nx != 0, (random[:,0]-0.5)*self.dx, random[:,0]/2*self.dx)
+        pos[:,0] -= numpy.where(index%self.nx == self.nx-1, random[:,0]/2*self.dx, 0)
+        pos[:,1] += numpy.where(index>self.nx, (random[:,1]-0.5)*self.dy, random[:,1]/2*self.dy) 
+        pos[:,1] -= numpy.where(index>=self.nx*(self.ny-1), random[:,1]/2*self.dy, 0) 
+        #Setting up velocities
+        vel = self.boundaries[0].sampleIsotropicVelocity(self.boundaries[0].thermalVelocity(species.mesh_values.temperature, species.m), particles)
+        vel += species.mesh_values.velocity[index]
+        #Adding particles
+        self.boundaries[0].addParticles(species, pos, vel)
 
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
     def print(self):

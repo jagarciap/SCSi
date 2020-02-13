@@ -1,5 +1,6 @@
 #Data structures that contain the fields of the system
 import numpy
+import pdb
 from vtk.util.numpy_support import vtk_to_numpy
 
 import constants as c

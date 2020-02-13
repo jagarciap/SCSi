@@ -1,6 +1,7 @@
 #Data structures that contain PIC numerical methods
 import numpy
 
+import constants as c
 import mesh as m
 
 #PIC (Abstract)(Association between Mesh and PIC):
@@ -78,23 +79,28 @@ class PIC_2D_rm1o(PIC):
         #divide by cell volume
         species.mesh_values.density /= self.mesh.volumes
     
-#       +scatterVelocity (Species) = return velocities of that species in every node of the mesh.
-    def scatterSpeed(self, species):
+#       +scatterVelocity (Species) = return velocities and temperatures of that species in every node of the mesh.
+    def scatterSpeedAndTemperature(self, species):
         #reset the velocity
         species.mesh_values.velocity *= 0
+        species.mesh_values.temperature *= 0
     
         #scatter particles to the mesh
         for dim in range(numpy.shape(species.part_values.velocity)[1]):
             self.scatter(species.part_values.position[:species.part_values.current_n], \
                     species.part_values.velocity[:species.part_values.current_n,dim], species.mesh_values.velocity[:,dim])
-            #Divide by number of particles
+            self.scatter(species.part_values.position[:species.part_values.current_n], \
+                    species.part_values.velocity[:species.part_values.current_n,dim]*species.part_values.velocity[:species.part_values.current_n,dim], species.mesh_values.temperature)
+            #Finalizing velocity
             species.mesh_values.velocity[:,dim] *= numpy.where(species.mesh_values.density < 1e-5, 0.0, species.spwt/species.mesh_values.density/self.mesh.volumes)
+            #Finalizing temperature
+            species.mesh_values.temperature *= numpy.where(species.mesh_values.density < 1e-5, 0.0, species.spwt/species.mesh_values.density/self.mesh.volumes*species.m/3/c.K)
+
         
     
 #       +scatterFlux = return flux of particles of that species into every indicated node (not all the mesh).
     def scatterFlux(self):
         pass
-    
     
 #	+gather([double, double] positions, [double, double] field): [double, double]field_p = Calculates values of the field in particles' positions, returning these values in an array as long as positions,
 #                                                                                               The columns are the (x,y,z) positions

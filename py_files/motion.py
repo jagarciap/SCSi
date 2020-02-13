@@ -64,7 +64,7 @@ class Leap_Frog(Motion_Solver):
     def updateMeshValues(self, species):
         if species.name == "Electron - Solar wind" or species.name == "Proton - Solar wind":
             self.pic.scatterDensity(species)
-            self.pic.scatterSpeed(species)
+            self.pic.scatterSpeedAndTemperature(species)
 
 #       +updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
     def updateParticles(self, species, field):

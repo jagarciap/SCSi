@@ -1,4 +1,5 @@
 #Data structure of the Boundaries
+import constants as c
 import numpy
 import pdb
 
@@ -31,17 +32,24 @@ class Boundary(object):
     def createDummyBox (self, location, pic, species, delta_n, n_vel, shift_vel):
         pass
 
-#       +It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
+    def thermalVelocity(self, mass, temperature):
+        return numpy.sqrt(2*c.K*temperature/mass)
+
+#       +sampleIsotropicVelocity([double] vth, [int] num) [double,double] = It receives an array of most probable speeds vth = \sqrt{2kT/m} and creates
+#           for each speed num 2D velocities with their magnitudes following a Maxwellian distribution.
 #       NOTE: This function needs to be revised. random should not spread throughout different cells, and should use the same seed for every function call.
 #    @nb.vectorize(signature = nb.double[:], target='cpu')
     def sampleIsotropicVelocity(self, vth, num):
+        #Prepare for the handling of different sets of temperature
+        total = numpy.sum(num)
+        index = numpy.repeat(numpy.arange(len(vth)), num)
         #pick a random angle
-        theta = 2*numpy.pi*numpy.random.rand(num)
+        theta = 2*numpy.pi*numpy.random.rand(total)
         #pick a random direction for n[2]
         n = numpy.append(numpy.cos(theta)[:,None], numpy.sin(theta)[:,None], axis = 1)
         #pick maxwellian velocities
-        rand_spread = numpy.random.rand(num,3)
-        vm = numpy.sqrt(2)*vth*(rand_spread[:,0]+rand_spread[:,1]+rand_spread[:,2]-1.5)
+        rand_spread = numpy.random.rand(total,3)
+        vm = numpy.sqrt(2)*vth[index]*(rand_spread[:,0]+rand_spread[:,1]+rand_spread[:,2]-1.5)
         #2D components of velocity 
         vel = n*vm[:,None]
         return vel
@@ -133,10 +141,11 @@ class Boundary(object):
         vel = numpy.zeros((total_new, species.vel_dim))
         # Preparing positions (this part is mesh-dependant [To be depurated later or changed each time].
         # Preparating velocities. This part is mesh-dependant trough sampleIsotropicVelocity.
+        #NOTE: Now I can do this for through numpy since now sampleIsotropicVelocity can receive many vths.
         phys_loc = pic.mesh.getPosition(location)
         c = 0
         for i in range(len(location)):
-            vel[c:c+mp_new[i],:] += self.sampleIsotropicVelocity(n_vel[i], mp_new[i])+shift_vel[i,:]
+            vel[c:c+mp_new[i],:] += self.sampleIsotropicVelocity([n_vel[i]], mp_new[i])+shift_vel[i,:]
             pos[c:c+mp_new[i],0] += phys_loc[i,0] + numpy.random.rand(mp_new[i])*box_x[i]
             #pos[c:c+mp_new[i],0] += phys_loc[i,0] + (numpy.random.rand(mp_new[i])-0.5)*pic.mesh.dx
             pos[c:c+mp_new[i],1] += phys_loc[i,1] + (numpy.random.rand(mp_new[i])-0.5)*pic.mesh.dy

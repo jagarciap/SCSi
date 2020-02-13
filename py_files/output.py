@@ -12,14 +12,14 @@ import pdb
 #       +Method that prepares the system to be printed in a '.vtk' file.
 #       +It receives in args[0] the timestep, and the rest of args are objects with functions saveVTK that provide dictionaries of the attributes to be stored in the file.
 #       +The actual printing is handled by the mesh.
-def saveVTK(mesh, *args):
+def saveVTK(mesh, sys_dic, keys):
     #Preparing file
     cwd = os.path.split(os.getcwd())[0]
-    vtkstring = cwd+'/results/ts{:d}'.format(args[0])
+    vtkstring = cwd+'/results/ts{:d}'.format(sys_dic[keys[0]])
     #Creating dictionary
     dic = {}
-    for arg in args[1:]:
-        dic.update(arg.saveVTK(mesh))
+    for key in keys[1:]:
+        dic.update(sys_dic[key].saveVTK(mesh))
     #Executing through mesh
     mesh.saveVTK(vtkstring, dic)
 
@@ -27,7 +27,7 @@ def saveVTK(mesh, *args):
 #       +Structure to be followed in *args:
 #       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals.
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
-def loadVTK(filename, mesh, *args):
+def loadVTK(filename, mesh, sys_dic, keys):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
     filename = cwd+'/initial_conditions/'+filename
@@ -35,8 +35,8 @@ def loadVTK(filename, mesh, *args):
     reader.SetFileName(filename)
     reader.Update()
     output = reader.GetOutput()
-    for arg in args[1:]:
-        arg.loadVTK(mesh, output)
+    for key in keys[1:]:
+        sys_dic[key].loadVTK(mesh, output)
 
 
 # The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
@@ -67,24 +67,24 @@ def particleTracker(ts, *args):
 #       +Structure to be followed in *args:
 #       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver).
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
-def savePickle(*args):
+def savePickle(sys_dic, keys):
     #Creating file's name
     cwd = os.path.split(os.getcwd())[0]
     time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
-    string = cwd+'/previous_executions/sys_ts={:d}_'.format(args[0])+time+'.pkl'
+    string = cwd+'/previous_executions/sys_ts={:d}_'.format(sys_dic[keys[0]])+time+'.pkl'
     #Storing information
     with open (string, 'wb') as output:
-        for arg in args:
-            pickle.dump(arg, output, -1)
+        for key in keys:
+            pickle.dump(sys_dic[key], output, -1)
 
 #       +Method that loads the information of the system from a '.pkl' and stores it in the arguments *args. See 'Pickle' module for further information.
 #       +Structure to be followed in *args:
 #       ++ts (timestep); fields: Electrics, Magnetics; Species: Electrons, Protons, Ions, Neutrals; part_solver (Particle Solver).
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
-def loadPickle(filename, *args):
+def loadPickle(filename, sys_dic, keys):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
     filename = cwd+'/initial_conditions/'+filename
     with open (filename, 'rb') as pinput:
-        for arg in args:
-            arg = pickle.load(pinput)
+        for key in keys:
+            sys_dic[key] = pickle.load(pinput)

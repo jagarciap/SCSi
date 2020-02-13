@@ -51,6 +51,7 @@ class Species(object):
 #	+nPoints (int) = Number of nodes in the mesh (Same as mesh class).
 #	+density ([double]) = Density values at each node.
 #	+velocity ([double, double]) = Velocity at each node. Rows are different points, columns are (x,y,z) components if they are available.
+#	+temperature ([double]) = Temperature values at each node.
 #       +residuals([double]) = remnants from injection of particles at the previous step.
 #Methods:
 #       +saveVTK(Mesh mesh, string name): dictionary = Return the attributes of the Species to be printed in the VTK file.
@@ -60,15 +61,18 @@ class Particles_In_Mesh(object):
         self.nPoints = n_nPoints
         self.density = numpy.zeros((self.nPoints))
         self.velocity = numpy.zeros((self.nPoints, n_vel_dim))
+        self.temperature = numpy.zeros((self.nPoints))
         self.residuals = numpy.zeros((self.nPoints))
 
     def saveVTK(self, mesh, name):
         return {name+"-density" : mesh.vtkOrdering(self.density),\
-                name+"-velocity": mesh.vtkOrdering(self.velocity)}
+                name+"-velocity": mesh.vtkOrdering(self.velocity),\
+                name+"-temperature": mesh.vtkOrdering(self.temperature)}
 
     def loadVTK(self, mesh, output, name):
         self.density = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
         self.velocity = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-velocity")))
+        self.temperature = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
 
 
 #Particles(Composition with Species):

@@ -35,23 +35,24 @@ import output as out
 #Methods:
 #	+Remark about init(): It will "declare" the attributes necessary for the simulation to run. The actual assignment of atributes
 #		to instances of each class will occur during the 'initial condition' section of 'main.py'.
-#	+arrangePickle() : Variable = Return the attributes necessary to store the state of the system, in the order required.
-#	+arrangeVTK() : Variable = Return the atrributes for save and load of/from VTK files, in the "order required".
+#	+arrangePickle() : Variable = Return a tuple of keys to iterate over when saving and loading of/from '.pkl' files, in the order required.
+#	+arrangeVTK() : Variable = Return a tuple of keys to iterate over when saving and loading of/from VTK files, in the order required.
 class System(object):
     def __init__(self):
-        self.ts = 0
-        self.mesh = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
-        self.pic = PIC_2D_rm1o(self.mesh)
-        self.part_solver = Leap_Frog(self.pic)
-        self.electrons = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, self.mesh.nPoints, c.NUM_TRACKED)
-        self.protons = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, self.mesh.nPoints, c.NUM_TRACKED)
-        self.e_field = Constant_Electric_Field(self.pic, c.DIM)
+        self.at = {}
+        self.at['ts'] = 0
+        self.at['mesh'] = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
+        self.at['pic'] = PIC_2D_rm1o(self.at['mesh'])
+        self.at['part_solver'] = Leap_Frog(self.at['pic'])
+        self.at['electrons'] = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
+        self.at['protons'] = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
+        self.at['e_field'] = Constant_Electric_Field(self.at['pic'], c.DIM)
 
     def arrangePickle(self):
-        return self.ts, self.e_field, self.electrons, self.protons, self.part_solver
+        return ('ts', 'e_field', 'electrons', 'protons', 'part_solver')
 
     def arrangeVTK(self):
-        return self.ts, self.e_field, self.electrons, self.protons
+        return ('ts', 'e_field', 'electrons', 'protons')
 
 #Initialization of the system and the previous step
 system = System()
@@ -72,13 +73,13 @@ if sys.argv[1] == '1':
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
-    filename = '.vtk'
-    out.loadVTK(filename, system.mesh, *system.arrangeVTK())
+    filename = 'ts400.vtr'
+    out.loadVTK(filename, system.at['mesh'], system.at, system.arrangeVTK())
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
-    filename = '.pkl'
-    out.loadPickle(filename, *arrangePickle())
+    filename = 'sys_ts=552_2020-02-13_18h34m.pkl'
+    out.loadPickle(filename, system.at, system.arrangePickle())
 
 else:
     raise("Somehing is wrong here")
@@ -90,23 +91,23 @@ else:
 
 #Injection of particles at all outer boundaries
 #Electrons
-e_n = c.E_N*numpy.ones((len(system.pic.mesh.boundaries[0].location)))
-drift_e_vel = numpy.zeros((len(system.pic.mesh.boundaries[0].location),2))
-thermal_e_vel = c.E_V_TH*numpy.ones((len(system.pic.mesh.boundaries[0].location)))
+e_n = c.E_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
+drift_e_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),2))
+thermal_e_vel = c.E_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_e_vel[:,0] += c.E_V_SW
 #Protons
-p_n = c.P_N*numpy.ones((len(system.pic.mesh.boundaries[0].location)))
-drift_p_vel = numpy.zeros((len(system.pic.mesh.boundaries[0].location),2))
-thermal_p_vel = c.P_V_TH*numpy.ones((len(system.pic.mesh.boundaries[0].location)))
+p_n = c.P_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
+drift_p_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),2))
+thermal_p_vel = c.P_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_p_vel[:,0] += c.P_V_SW
 
-for boundary in system.mesh.boundaries:
-    boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.electrons, e_n, thermal_e_vel, drift_e_vel)
-    boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.protons, p_n, thermal_p_vel, drift_p_vel)
+for boundary in system.at['mesh'].boundaries:
+    boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
+    boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
 
 #Half-step speed recoil to meet Leap-frog condition
-system.part_solver.updateMeshValues(system.protons)
-system.part_solver.updateMeshValues(system.electrons)
+system.at['part_solver'].updateMeshValues(system.at['protons'])
+system.at['part_solver'].updateMeshValues(system.at['electrons'])
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Main loop
@@ -114,48 +115,48 @@ system.part_solver.updateMeshValues(system.electrons)
 
 # try/except block to capture any error and save before the step before the crash. It also allows the simulation to be stopped.
 try:
-    while system.ts < c.NUM_TS:
-        print('ts = ', system.ts)
+    while system.at['ts'] < c.NUM_TS:
+        print('ts = ', system.at['ts'])
     
         # Electron motion
         for te in range(c.ELECTRON_TS):
             print('te = ', te)
-            system.e_field.computeField([system.protons, system.electrons])
-            system.part_solver.advance(system.electrons, system.e_field)
-            # Applying field borders and injecting electrons
-            for boundary in system.mesh.boundaries:
-                boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.electrons, e_n, thermal_e_vel, drift_e_vel)
+            system.at['e_field'].computeField([system.at['protons'], system.at['electrons']])
+            system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'])
+            # Applying field borders and injecting at['electrons']
+            for boundary in system.at['mesh'].boundaries:
+                boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
     
         #Proton motion
-        system.part_solver.advance(system.protons, system.e_field)
-        for boundary in system.mesh.boundaries:
-            boundary.injectParticlesDummyBox(boundary.location, system.part_solver, system.e_field, system.protons, p_n, thermal_p_vel, drift_p_vel)
+        system.at['part_solver'].advance(system.at['protons'], system.at['e_field'])
+        for boundary in system.at['mesh'].boundaries:
+            boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
     
         #Output vtk
-        if system.ts%10 == 0:
-            out.saveVTK(system.mesh, *system.arrangeVTK())
-        if system.ts%1 == 0:
-            out.particleTracker(system.ts, system.protons, system.electrons)
+        if system.at['ts']%10 == 0:
+            out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
+        if system.at['ts']%1 == 0:
+            out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
     
         #Updating previous state
         old_system = copy.deepcopy(system)
     
         #Advance in timestep
-        system.ts += 1
+        system.at['ts'] += 1
 
 except KeyboardInterrupt:
-    out.savePickle(*old_system.arrangePickle())
+    out.savePickle(old_system.at, old_system.arrangePickle())
     print('Process aborted')
     print('Previous state succesfully saved')
     sys.exit()
 except:
-    out.savePickle(*old_system.arrangePickle())
+    out.savePickle(old_system.at, old_system.arrangePickle())
     print('Unexpected error')
     print('Previous state succesfully saved')
     raise
     pdb.set_trace()
 
-out.savePickle(*system.arrangePickle())
+out.savePickle(system.at, system.arrangePickle())
 print('Simulation finished')
 print('Last state succesfully saved')
 sys.exit()
