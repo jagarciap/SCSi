@@ -179,12 +179,12 @@ class Mesh_2D_rm (Mesh):
 #       +loadSpeciesVTK(self, species) = It creates particles around every node that can match the preoladed density and velocity of that node. This will depend on each type of mesh.
     def loadSpeciesVTK(self, species):
         #Preparing things for numpy functions use
-        particles = species.mesh_values.density*self.volumes/species.spwt
+        particles = (species.mesh_values.density*self.volumes/species.spwt).astype(int)
         ind = numpy.arange(self.nPoints)
         index = numpy.repeat(ind, particles)
         #Setting up positions
         pos = self.getPosition(ind)[index]
-        random = numpy.random.rand(numpy.shape(pos))
+        random = numpy.random.rand(*numpy.shape(pos))
         random += numpy.where(random == 0, 1e-3, 0)
         pos[:,0] += numpy.where(index%self.nx != 0, (random[:,0]-0.5)*self.dx, random[:,0]/2*self.dx)
         pos[:,0] -= numpy.where(index%self.nx == self.nx-1, random[:,0]/2*self.dx, 0)

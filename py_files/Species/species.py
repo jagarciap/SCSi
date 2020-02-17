@@ -1,5 +1,6 @@
 #Data structures that define the information of the species in general
 from vtk.util.numpy_support import vtk_to_numpy
+import constants as c
 import numpy
 
 #Species (Abstract):
@@ -41,7 +42,9 @@ class Species(object):
         return self.mesh_values.saveVTK(mesh, self.name)
 
     def loadVTK(self, mesh, output):
-        return self.mesh_values.loadVTK(mesh, output, self.name)
+        self.mesh_values.loadVTK(mesh, output, self.name)
+        mesh.loadSpeciesVTK(self)
+
 
 
 #Particles_In_Mesh (Abstract)(Composition with Species):
@@ -67,12 +70,12 @@ class Particles_In_Mesh(object):
     def saveVTK(self, mesh, name):
         return {name+"-density" : mesh.vtkOrdering(self.density),\
                 name+"-velocity": mesh.vtkOrdering(self.velocity),\
-                name+"-temperature": mesh.vtkOrdering(self.temperature)}
+                name+"-temperature": mesh.vtkOrdering(self.temperature/c.EV_TO_K)}
 
     def loadVTK(self, mesh, output, name):
         self.density = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
         self.velocity = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-velocity")))
-        self.temperature = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
+        self.temperature = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-temperature")))*c.EV_TO_K
 
 
 #Particles(Composition with Species):

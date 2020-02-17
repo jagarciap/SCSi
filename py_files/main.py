@@ -73,12 +73,12 @@ if sys.argv[1] == '1':
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
-    filename = 'ts400.vtr'
+    filename = 'ts250.vtr'
     out.loadVTK(filename, system.at['mesh'], system.at, system.arrangeVTK())
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
-    filename = 'sys_ts=552_2020-02-13_18h34m.pkl'
+    filename = 'sys_ts=57_2020-02-14_17h34m.pkl'
     out.loadPickle(filename, system.at, system.arrangePickle())
 
 else:
@@ -105,7 +105,7 @@ for boundary in system.at['mesh'].boundaries:
     boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
     boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
 
-#Half-step speed recoil to meet Leap-frog condition
+#Update of mesh values
 system.at['part_solver'].updateMeshValues(system.at['protons'])
 system.at['part_solver'].updateMeshValues(system.at['electrons'])
 
@@ -135,8 +135,8 @@ try:
         #Output vtk
         if system.at['ts']%10 == 0:
             out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
-        if system.at['ts']%1 == 0:
-            out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
+        #if system.at['ts']%1 == 0:
+        #    out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
     
         #Updating previous state
         old_system = copy.deepcopy(system)

@@ -111,5 +111,5 @@ class Outer_2D_Rectangular(Boundary):
                 pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
                 pos[:,1] += numpy.random.rand(mp_new)*pic.mesh.dy/2
 
-            vel = super().sampleIsotropicVelocity([n_vel[i]], numpy.shape(pos)[0])+shift_vel[i,:]
+            vel = super().sampleIsotropicVelocity(numpy.asarray([n_vel[i]]), numpy.shape(pos)[0])+shift_vel[i,:]
             self.addParticles(species,pos,vel)
