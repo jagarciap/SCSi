@@ -564,3 +564,11 @@ This, to maintain the protocol of mostly using first-word-lower-case then first-
 ----
 
 
+2020_02_20.txt -PHD --scsi
+
+> How the temperature of the Solar Wind is measured?
+> Work of today: Right now I'm running the code with one quarter of the original domain to have faster solutions with a larger amount of particles per cell, so to have less numerical fluctuations to see if that is the root of the problem with the Poisson solver. I'm also studying how well the ethod for adding particles to the mesh works, since this might be the reason for the strange fluctuations that appear from time to time. The code also is having a weird pulse every 110 steps (at least that's ow is recorded right now). It's important to study that. The temperature is now working well both is being calculated at around half of its correct value. There is a new folder, copy of the folder SCSI. It doesn't have anything of importance, is just to run two simulations at once.
+
+----
+
+

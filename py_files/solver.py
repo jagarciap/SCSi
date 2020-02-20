@@ -1,5 +1,6 @@
 #File containing the methods to calculate potentials and fields
 import numpy
+import pdb
 
 
 #       +Method that computes the electric potential for a 2D rectangular mesh using the method of
@@ -40,6 +41,7 @@ def poissonSolver_2D_rm_SORCA(mesh, pot, rhs, err = 1e-3, step_limit = 1000):
             norm += res*res
             pot[ind] = pot[ind]-w*res/e[ind]
         w = 1.0/(1-0.25*rho*rho*w)
+        print(norm)
         if t == 1:
             w = 1.0/(1-0.5*rho*rho)
         if norm < err:

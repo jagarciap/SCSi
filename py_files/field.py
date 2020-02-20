@@ -85,8 +85,9 @@ class Electrostatic_2D_rm(Electric_Field):
         #Prepare the right-hand-side of the Poisson equation 
         rho = numpy.zeros_like(species[0].mesh_values.density)
         for specie in species:
-            rho += specie.mesh_values.density/specie.q
+            rho += specie.mesh_values.density*specie.q
         rho /= -c.EPS_0
+        #pdb.set_trace()
         slv.poissonSolver_2D_rm_SORCA(self.pic.mesh, self.potential, rho)
         self.field = -slv.derive_2D_rm(self.pic.mesh, self.potential)
         for boundary in self.pic.mesh.boundaries:

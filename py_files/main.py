@@ -6,7 +6,7 @@ import sys
 numpy.seterr(invalid='ignore', divide='ignore', over = 'raise')
 
 import constants as c
-from field import Constant_Electric_Field
+from field import Electrostatic_2D_rm, Constant_Electric_Field
 from mesh import Mesh_2D_rm
 from Species.proton import Proton_SW
 from Species.electron import Electron_SW
@@ -73,8 +73,9 @@ if sys.argv[1] == '1':
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
-    filename = 'ts250.vtr'
+    filename = 'ts1990.vtr'
     out.loadVTK(filename, system.at['mesh'], system.at, system.arrangeVTK())
+    system.at['e_field'] = Electrostatic_2D_rm(system.at['pic'], c.DIM)
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
