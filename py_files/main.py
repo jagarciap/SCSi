@@ -93,12 +93,12 @@ else:
 #Injection of particles at all outer boundaries
 #Electrons
 e_n = c.E_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
-drift_e_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),2))
+drift_e_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),c.DIM))
 thermal_e_vel = c.E_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_e_vel[:,0] += c.E_V_SW
 #Protons
 p_n = c.P_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
-drift_p_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),2))
+drift_p_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),c.DIM))
 thermal_p_vel = c.P_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_p_vel[:,0] += c.P_V_SW
 

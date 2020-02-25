@@ -15,7 +15,7 @@ import pdb
 def saveVTK(mesh, sys_dic, keys):
     #Preparing file
     cwd = os.path.split(os.getcwd())[0]
-    vtkstring = cwd+'/results/ts{:d}'.format(sys_dic[keys[0]])
+    vtkstring = cwd+'/results/ts{:05d}'.format(sys_dic[keys[0]])
     #Creating dictionary
     dic = {}
     for key in keys[1:]:

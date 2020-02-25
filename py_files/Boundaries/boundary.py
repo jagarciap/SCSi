@@ -52,14 +52,14 @@ class Boundary(object):
         #pick maxwellian velocities
         rand_spread = numpy.random.rand(total,3)
         vm = numpy.sqrt(2)*vth[index]*(rand_spread[:,0]+rand_spread[:,1]+rand_spread[:,2]-1.5)
-        #NOTE: Delete later
-        print(num)
-        #plt.hist(vm)
-        x = numpy.linspace( 0, 1e7, num = 50)
-        y = total/numpy.pi/vth/vth*numpy.exp(-x*x/vth/vth)
-        plt.plot(x,y)
-        plt.show()
-        pdb.set_trace()
+        ##NOTE: Delete later
+        #print(num)
+        ##plt.hist(vm)
+        #x = numpy.linspace( 0, 1e7, num = 50)
+        #y = total/numpy.pi/vth/vth*numpy.exp(-x*x/vth/vth)
+        #plt.plot(x,y)
+        #plt.show()
+        #pdb.set_trace()
         #2D components of velocity 
         vel = n*vm[:,None]
         return vel

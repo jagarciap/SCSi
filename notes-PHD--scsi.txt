@@ -572,3 +572,22 @@ This, to maintain the protocol of mostly using first-word-lower-case then first-
 ----
 
 
+2020_02_21.txt -PHD --scsi
+
+> According to \cite{cartwright2000loading} term usage, the kind of injection of particles that I want to accomplish is called "drifting Maxwellian flux".
+
+----
+
+
+2020_02_25.txt -PHD --scsi
+
+> Now it seems that the Poisson solver is working, but that the numerical inhomogeneities in the dominion do not allow the solver to converge. I will study that more. Poisson solver seems to be working without problems. Still, there is a factor 3 separating the value of temperature obtained from the simulation from the one expected. Reviewing that problem I found that the method used to load a Maxwellian distribution was incorrect. I was multiplying by \sqrt{2} one more time than necessary. So, I changed the definition of V_TH from \sqrt{2kT/m} to \sqrt{kT/m}, so now it is not accounting for the most probable speed, but a speed such that Maxwellian distribution is written as \exp{-v^{2}/(2V_TH^{2})}. However, this would mean less velocity, which in turn would mean less temperature. Tomorrow the work will be around seeing the details of y loading of particles. There can be problems about loading with a lot of numerical noise (not a good representation of the Maxwellian distribution) or even a factor of calculating wrongly the expected thermal velocities due to be working in 2D instead of 3D.
+NOTE: Change in the definition *_V_TH of something in constans.c. See upwards for more information.
+
+> The problem of the strange oscilation through time of densities and temperatures was because I was saving '.vtr' files without a proper ordering. Problem fixed. Actually, with the current values of SPWT, dx and dy, the simulation is producing low noise. Values such as mean density and temperature do not have much fluctuations.
+> Both electrons are protons are being loaded with an average of 6.9e9, not 7e9. It is necessary to fix this.
+
+
+----
+
+

@@ -18,7 +18,7 @@ ELECTRON_TS = 10   #Internal iterations for electron dynamics
 
 #Geometrical parameters for a rectangular outer boundary
 XMIN = 0.0
-XMAX = 5.0
+XMAX = 2.5
 YMIN = -2.5
 YMAX = 2.5
 DEPTH = 1.0
@@ -28,12 +28,12 @@ NY = numpy.uint16(10)
 #Particle physical parameters
 E_N = 7e9
 E_T = 84.47*EV_TO_K
-E_V_TH = numpy.sqrt(2*K*E_T/ME)
+E_V_TH = numpy.sqrt(K*E_T/ME)
 E_V_SW = 300e3
 
 P_N = 7e9
 P_T = 87.25*EV_TO_K
-P_V_TH = numpy.sqrt(2*K*P_T/MP)
+P_V_TH = numpy.sqrt(K*P_T/MP)
 P_V_SW = 300e3
 
 #Particle simulation parameters

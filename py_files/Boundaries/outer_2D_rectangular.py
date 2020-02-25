@@ -26,7 +26,7 @@ class Outer_2D_Rectangular(Boundary):
 
 #	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument. So far a 0V Dirichlet boundary condition is applied.
     def applyElectricBoundary(self, e_field):
-        e_field.dirichlet(self.location, numpy.zeros((len(location))))
+        e_field.dirichlet(self.location, numpy.zeros((len(self.location))))
 
 #	+applyMagneticBoundary(Magnetic_Field) = Applies the boundary condition to the magnetic field passed as argument.
 #       No magnetic field so far
