@@ -110,7 +110,7 @@ class PIC_2D_rm1o(PIC):
             self.scatterDiffSq(species.part_values.position[:species.part_values.current_n], \
                     species.part_values.velocity[:species.part_values.current_n,dim], species.mesh_values.velocity[:,dim], species.mesh_values.temperature)
         #Finalizing temperature
-        species.mesh_values.temperature *= numpy.where(species.mesh_values.density < 1e-5, 0.0, species.spwt/species.mesh_values.density/self.mesh.volumes*species.m/3/c.K)
+        species.mesh_values.temperature *= numpy.where(species.mesh_values.density < 1e-5, 0.0, species.spwt/species.mesh_values.density/self.mesh.volumes*species.m/c.K)
     
 #       +scatterFlux = return flux of particles of that species into every indicated node (not all the mesh).
     def scatterFlux(self):

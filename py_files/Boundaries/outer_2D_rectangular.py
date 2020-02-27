@@ -58,8 +58,9 @@ class Outer_2D_Rectangular(Boundary):
             # Setting up position and velocities
             if phys_loc[i,0] == pic.mesh.xmin:
                 if phys_loc[i,1] == pic.mesh.ymin:
-                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+numpy.random.rand()
+                    mpf_new = delta_n[i]*4*pic.mesh.volumes[location[i]]/species.spwt+species.mesh_values.residuals[location[i]]+numpy.random.rand()
                     mp_new = mpf_new.astype(int)
+                    species.mesh_values.residuals[location[i]] = mpf_new-mp_new
                     pos = numpy.ones((mp_new, species.pos_dim))*phys_loc[i].T
                     pos[:,0] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dx
                     pos[:,1] += (numpy.random.rand(mp_new)-0.5)*pic.mesh.dy

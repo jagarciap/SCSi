@@ -591,3 +591,42 @@ NOTE: Change in the definition *_V_TH of something in constans.c. See upwards fo
 ----
 
 
+2020_02_27.txt -PHD --scsi
+
+> I have been working quite a lot in many things: 
+>>Now the temperature works but I still don't understand why. I mean, why the function is T = v_{rms}^{2}*m/k. 
+>> I create a set of functions for printing the positions and velocities of particles in a new folder called 'results_particles' and I create some functions to check how well the simulation is working. 
+>>The graphs are being plotted in 'test_results' and the ones created today do not have the electric field activated.
+> The method for creating velocities that follow a Maxwellian distribution was checked, the result is in 'test_results'. It plots a distribution of 'e^{-v^{2}/v_{th}^{2}} with v_{th} = \sqrt{2kT/m} as is now defined in 'constants.py' again.
+> I think all of the functions necessary to check to keep compatibility of the code accross OSes have been checked and updated.
+> Results of the gaussian fits to the cummulative of velocites in the last step of the simulation:
+#---------------------------------------------------------------------------------------------------------
+
+electrons_vel_x
+[9.27185187e+02 1.53913278e+05 1.71915658e+06] [[ 1.67514095e+03  4.80433453e-02 -2.07077443e+06]
+ [ 4.80433453e-02  7.67954478e+09 -2.85930133e+01]
+ [-2.07077443e+06 -2.85930133e+01  7.67954515e+09]]
+Temperature_vel_x 16.803872344735925
+electrons_vel_y
+[ 9.20258956e+02 -1.32808953e+05  1.76159826e+06] [[ 1.91490131e+03  3.47040804e-02 -2.44388598e+06]
+ [ 3.47040804e-02  9.35700297e+09 -4.32790122e+01]
+ [-2.44388598e+06 -4.32790122e+01  9.35700243e+09]]
+Temperature_vel_y 17.643805146514858
+
+protons_vel_x
+[   852.01505641 297041.8139957   44792.82212911] [[ 9.93515516e+02  3.54534382e-03 -3.48229440e+04]
+ [ 3.54534382e-03  3.66165624e+06 -1.87784461e-01]
+ [-3.48229440e+04 -1.87784461e-01  3.66165627e+06]]
+Temperature_vel_x 20.946148733445096
+protons_vel_y
+[  870.34100732 -3439.13950841 45482.6052894 ] [[ 1.29434080e+03 -1.19789359e-03 -4.50950452e+04]
+ [-1.19789359e-03  4.71335598e+06  9.86337652e-02]
+ [-4.50950452e+04  9.86337652e-02  4.71335636e+06]]
+Temperature_vel_y 21.596232726840576
+
+#---------------------------------------------------------------------------------------------------------
+I have to think about these results. Why the temperature is so different, the fits so badly done.
+
+----
+
+

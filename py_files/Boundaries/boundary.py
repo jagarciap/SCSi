@@ -1,6 +1,7 @@
 #Data structure of the Boundaries
 import constants as c
 #Delete later
+import copy
 import matplotlib.pyplot as plt
 import numpy
 import pdb
@@ -34,7 +35,7 @@ class Boundary(object):
     def createDummyBox (self, location, pic, species, delta_n, n_vel, shift_vel):
         pass
 
-    def thermalVelocity(self, mass, temperature):
+    def thermalVelocity(self, temperature, mass):
         return numpy.sqrt(2*c.K*temperature/mass)
 
 #       +sampleIsotropicVelocity([double] vth, [int] num) [double,double] = It receives an array of most probable speeds vth = \sqrt{2kT/m} and creates
@@ -43,6 +44,9 @@ class Boundary(object):
 #    @nb.vectorize(signature = nb.double[:], target='cpu')
     def sampleIsotropicVelocity(self, vth, num):
         #Prepare for the handling of different sets of temperature
+        ##NOTE: Delete later
+        #vth = numpy.asarray([vth[0]])
+        #num = int(1e5)
         total = numpy.sum(num)
         index = numpy.repeat(numpy.arange(len(vth)), num)
         #pick a random angle
@@ -53,13 +57,15 @@ class Boundary(object):
         rand_spread = numpy.random.rand(total,3)
         vm = numpy.sqrt(2)*vth[index]*(rand_spread[:,0]+rand_spread[:,1]+rand_spread[:,2]-1.5)
         ##NOTE: Delete later
-        #print(num)
-        ##plt.hist(vm)
-        #x = numpy.linspace( 0, 1e7, num = 50)
-        #y = total/numpy.pi/vth/vth*numpy.exp(-x*x/vth/vth)
+        #val = plt.hist(vm, 40)
+        #length = val[1][1]-val[1][0]
+        #integral = length*numpy.sum(val[0])
+        #A = val[0].max()
+        #x = numpy.linspace( val[1].min(), val[1].max(), num = 50)
+        #y = A*numpy.exp(-x*x/vth/vth)
         #plt.plot(x,y)
-        #plt.show()
         #pdb.set_trace()
+        #plt.show()
         #2D components of velocity 
         vel = n*vm[:,None]
         return vel
@@ -178,7 +184,9 @@ class Boundary(object):
     def injectParticlesDummyBox(self, location, part_solver, field, species, delta_n, n_vel, shift_vel):
         # Creating temporary species
         ghost = Species("temporary species", species.dt, species.q, species.m, species.debye, species.spwt, int(species.part_values.max_n/10), species.pos_dim, species.vel_dim, species.mesh_values.nPoints)
+        ghost.mesh_values.residuals = species.mesh_values.residuals
         self.createDummyBox(location, part_solver.pic, ghost, delta_n, n_vel, shift_vel)
+        species.mesh_values.residuals[location] = copy.copy(ghost.mesh_values.residuals[location])
         np = ghost.part_values.current_n
         #Entering particles into the mesh and adjusting them according to motion_solver
         ghost.part_values.position[:np,:] += ghost.part_values.velocity[:np,:]*ghost.dt

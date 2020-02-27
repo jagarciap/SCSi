@@ -44,7 +44,11 @@ class Species(object):
     def loadVTK(self, mesh, output):
         self.mesh_values.loadVTK(mesh, output, self.name)
         mesh.loadSpeciesVTK(self)
-
+    
+    def saveParticlesTXT(self):
+        data, names, array = self.part_values.saveParticlesTXT()
+        species_data = self.name+"\t"+data
+        return  species_data, names, array
 
 
 #Particles_In_Mesh (Abstract)(Composition with Species):
@@ -70,7 +74,8 @@ class Particles_In_Mesh(object):
     def saveVTK(self, mesh, name):
         return {name+"-density" : mesh.vtkOrdering(self.density),\
                 name+"-velocity": mesh.vtkOrdering(self.velocity),\
-                name+"-temperature": mesh.vtkOrdering(self.temperature/c.EV_TO_K)}
+                name+"-temperature": mesh.vtkOrdering(self.temperature/c.EV_TO_K),\
+                name+"-residuals": mesh.vtkOrdering(self.residuals)}
 
     def loadVTK(self, mesh, output, name):
         self.density = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name+"-density")))
@@ -97,3 +102,9 @@ class Particles(object):
         self.num_tracked = numpy.uint16(num_tracked)
         if num_tracked != 0:
             self.trackers = self.max_n*numpy.ones((num_tracked), dtype = numpy.uint32)
+
+    def saveParticlesTXT(self):
+        names = "position\tvelocity"
+        data = "{:6d}-{:1d}-{:1d}".format(self.current_n, numpy.shape(self.position)[1], numpy.shape(self.velocity)[1])
+        array = numpy.append(self.position[:self.current_n,:], self.velocity[:self.current_n,:], axis = 1)
+        return data, names, array

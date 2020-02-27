@@ -15,7 +15,7 @@ import pdb
 def saveVTK(mesh, sys_dic, keys):
     #Preparing file
     cwd = os.path.split(os.getcwd())[0]
-    vtkstring = cwd+'/results/ts{:05d}'.format(sys_dic[keys[0]])
+    vtkstring = os.path.join(cwd,'results','ts{:05d}'.format(sys_dic[keys[0]]))
     #Creating dictionary
     dic = {}
     for key in keys[1:]:
@@ -30,7 +30,7 @@ def saveVTK(mesh, sys_dic, keys):
 def loadVTK(filename, mesh, sys_dic, keys):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
-    filename = cwd+'/initial_conditions/'+filename
+    filename = os.path.join(cwd,'initial_conditions',filename)
     reader = mesh.vtkReader()
     reader.SetFileName(filename)
     reader.Update()
@@ -59,7 +59,7 @@ def particleTracker(ts, *args):
         nHeader += args[i].name + '\t'
 
     cwd = os.path.split(os.getcwd())[0]
-    workfile = cwd+'/particle_tracker/ts={:05d}.dat'.format(ts)
+    workfile = os.path.join(cwd, 'particle_tracker', 'ts={:05d}.dat'.format(ts))
     nHeader = 'No. of particles = {:d} \n'.format(args[0].part_values.num_tracked)+nHeader
     numpy.savetxt(workfile, narray , fmt = '%.5e', delimiter = '\t', header = nHeader)
 
@@ -69,9 +69,9 @@ def particleTracker(ts, *args):
 #       ++Inside the types not further specified now, an alphabetical order with respect to the classes' names will be maintained.
 def savePickle(sys_dic, keys):
     #Creating file's name
-    cwd = os.path.split(os.getcwd())[0]
     time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
-    string = cwd+'/previous_executions/sys_ts={:d}_'.format(sys_dic[keys[0]])+time+'.pkl'
+    cwd = os.path.split(os.getcwd())[0]
+    string = os.path.join(cwd,'previous_executions','sys_ts={:d}_'.format(sys_dic[keys[0]])+time+'.pkl')
     #Storing information
     with open (string, 'wb') as output:
         for key in keys:
@@ -84,7 +84,36 @@ def savePickle(sys_dic, keys):
 def loadPickle(filename, sys_dic, keys):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
-    filename = cwd+'/initial_conditions/'+filename
+    filename = os.path.join(cwd,'initial_conditions',filename)
     with open (filename, 'rb') as pinput:
         for key in keys:
             sys_dic[key] = pickle.load(pinput)
+
+def saveParticlesTXT(sys_dic, keys):
+    #Preparing path
+    cwd = os.path.split(os.getcwd())[0]
+    filename = os.path.join(cwd,'results_particles','ts{:05d}.dat'.format(sys_dic[keys[0]]))
+    species_id = []
+    attributes = []
+    arrays = []
+    for key in keys[1:]:
+        n_id, n_att, n_array = sys_dic[key].saveParticlesTXT()
+        species_id.append(n_id)
+        attributes.append(n_att)
+        if key == keys[1]:
+            arrays = n_array
+        else:
+            diff = arrays.shape[0]-n_array.shape[0]
+            if diff < 0:
+                fill = numpy.zeros((-diff, arrays.shape[1]))
+                arrays = numpy.append(arrays, fill, axis = 0)
+            else:
+                fill = numpy.zeros((diff, n_array.shape[1]))
+                n_array = numpy.append(n_array, fill, axis = 0)
+            arrays = numpy.append(arrays, n_array, axis = 1)
+    first_row = '\t'.join(species_id)
+    second_row = '\t'.join(attributes)
+    nHeader = first_row+'\n'+second_row
+    numpy.savetxt(filename, arrays, fmt = '%+.6e', delimiter = '\t', header = nHeader)
+
+

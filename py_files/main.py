@@ -54,6 +54,9 @@ class System(object):
     def arrangeVTK(self):
         return ('ts', 'e_field', 'electrons', 'protons')
 
+    def arrangeParticlesTXT(self):
+        return ('ts', 'electrons', 'protons')
+
 #Initialization of the system and the previous step
 system = System()
 old_system = copy.deepcopy(system)
@@ -136,6 +139,8 @@ try:
         #Output vtk
         if system.at['ts']%10 == 0:
             out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
+        if system.at['ts']%20 == 0:
+            out.saveParticlesTXT(system.at, system.arrangeParticlesTXT())
         #if system.at['ts']%1 == 0:
         #    out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
     

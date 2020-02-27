@@ -2,9 +2,9 @@
 import numpy
 import os
 import pdb
+from subprocess import check_output
 import sys
 from vtk.util.numpy_support import vtk_to_numpy
-from subprocess import check_output
 
 def vtrToNumpy(mesh, filenames, names):
     arrays = []
