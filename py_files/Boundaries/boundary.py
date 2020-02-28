@@ -20,6 +20,8 @@ from Species.species import Species
 #	+applyParticleBoundary(Species) = Applies the boundary condition to the species passed as argument.
 #       +createDummyBox(self, location, pic, species, delta_n, n_vel, shift_vel) = create the dummy box with particles in it.
 #       +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
+#       +updateTrackers(Species species, int new_particles) = Add new indexes to species.part_values.trackers, indicating the new particles to track.
+#           new_particles indicates the latest amount of particles that were added to species.
 #       +removeParticles(Species species, [ind] ind, Boolean tracker) = Removes the particles from species stored at 'ind' positions. tracker indicates whether there is need for handling a Tracker instance.
 #       +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
 class Boundary(object):
@@ -80,18 +82,22 @@ class Boundary(object):
         species.part_values.velocity[species.part_values.current_n:species.part_values.current_n+n]= vel
         #increment particle counter
         species.part_values.current_n += n
+
+#       +Add new indexes to species.part_values.trackers, indicating the new particles to track.
+#           new_particles indicates the latest amount of particles that were added to species.
+    def updateTrackers(self, species, new_particles):
         #Updating trackers
         if species.part_values.num_tracked != 0:
             ind_new = numpy.argwhere(species.part_values.trackers == species.part_values.max_n)
             num_new = len(ind_new)
             if num_new != 0:
-                init = species.part_values.current_n-n
-                if n < num_new:
+                init = species.part_values.current_n-new_particles
+                if new_particles < num_new:
                     step = 1
                     end = species.part_values.current_n
-                    ind2 = n
+                    ind2 = new_particles
                 else:
-                    step = n//num_new
+                    step = new_particles//num_new
                     end = init+step*num_new
                     ind2 = num_new
                 species.part_values.trackers[ind_new[:ind2]] = numpy.arange(init, end, step, dtype = numpy.uint32)[:,None]
@@ -106,8 +112,8 @@ class Boundary(object):
         species.part_values.velocity[:species.part_values.current_n,:] = numpy.delete(species.part_values.velocity[:temp,:], ind, axis = 0)
         #Updating trackers
         if species.part_values.num_tracked != 0:
-            ind1 = numpy.sort(ind)
             #Sorting both trackers and indices to be deleted
+            ind1 = numpy.sort(ind)
             ind_trackers = numpy.argsort(species.part_values.trackers)
             trackers1 = species.part_values.trackers[ind_trackers]
             ind_c = 0
@@ -118,11 +124,11 @@ class Boundary(object):
                 if ind1[ind_c] < trackers1[tracker_c]:
                     n += 1
                     ind_c += 1
-                    break
+                    continue
                 elif ind1[ind_c] > trackers1[tracker_c]:
                     trackers1[tracker_c] -= n
                     tracker_c += 1
-                    break
+                    continue
                 elif ind1[ind_c] == trackers1[tracker_c]:
                     trackers1[tracker_c] = species.part_values.max_n
                     n += 1
@@ -200,5 +206,6 @@ class Boundary(object):
         part_solver.initialConfiguration(ghost, field)
         #Adding particles
         self.addParticles(species, ghost.part_values.position[:ghost.part_values.current_n,:], ghost.part_values.velocity[:ghost.part_values.current_n,:])
+        self.updateTrackers(species, ghost.part_values.current_n)
         print("Injected particles: ",ghost.part_values.current_n)
         print("Total {}".format(species.name),": ", species.part_values.current_n)

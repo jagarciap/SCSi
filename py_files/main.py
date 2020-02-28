@@ -137,12 +137,12 @@ try:
             boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
     
         #Output vtk
-        if system.at['ts']%10 == 0:
-            out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
-        if system.at['ts']%20 == 0:
-            out.saveParticlesTXT(system.at, system.arrangeParticlesTXT())
-        #if system.at['ts']%1 == 0:
-        #    out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
+        #if system.at['ts']%10 == 0:
+        #    out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
+        #if system.at['ts']%20 == 0:
+        #    out.saveParticlesTXT(system.at, system.arrangeParticlesTXT())
+        if system.at['ts']%1 == 0:
+            out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
     
         #Updating previous state
         old_system = copy.deepcopy(system)

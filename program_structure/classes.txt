@@ -300,6 +300,8 @@ Methods stored here for convenience:
      	Inject the particles in location indices by creating dummy boxes around them, creating particles
     	inside of them, moving the particles, and then adding the ones that entered into the computational domain.
     +addParticles(Species species, [double, double] pos, [double, double] vel) = Add to Species the new particles, each represented by a row in pos and vel.
+	+updateTrackers(Species species, int new_particles) = Add new indexes to species.part_values.trackers, indicating the new particles to track.
+	    new_particles indicates the latest amount of particles that were added to species.
     +removeParticles(Species species, [ind] ind) = Removes the particles from species stored at 'ind' positions.
     +sampleIsotropicVelocity(double vth, int num) = It receives the most probable speed vth = \sqrt{2kT/m} and creates num random 2D velocities with their magnitudes following a Maxwellian distribution.
 

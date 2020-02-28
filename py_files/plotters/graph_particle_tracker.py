@@ -25,7 +25,7 @@ class Species_Plotter(object):
 
 def load_files(ind):
     #Preparing instances of Species_plotter in order to store data
-    cwd_base = os.getcwd().rsplit(sep = os.sep, maxsplit = 2)
+    cwd_base = os.getcwd().rsplit(sep = os.sep, maxsplit = 1)
     cwd = os.path.join(cwd_base[0], 'particle_tracker','')
     filename = cwd+'ts={:05d}.dat'.format(ind[0])
     f = open(filename)
