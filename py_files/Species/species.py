@@ -24,6 +24,8 @@ import numpy
 #           The process is handled through Particles_In_Mesh.
 #       +loadVTK(Mesh mesh, output) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
 #           The process is handled through Particles_In_Mesh.
+#       +saveParticlesTXT() String, String, [double, double] = Return the array containing Particle attributes of the species.
+#           species_data contains, besides attributes being stored, the name of the species.
 class Species(object):
     def __init__(self, name, dt, n_q, n_m, n_debye, n_spwt, n_max_n, n_pos_dim, n_vel_dim, n_nPoints, n_num_tracked = 0):
         self.name = name
@@ -93,6 +95,9 @@ class Particles_In_Mesh(object):
 #	+velocity ([double,double]) = Position of every particle. Rows are different particles, columns are (x,y,z) components if available.
 #	+num_tracked (int) = Size of particles being tracked. Defaults to 0 meaning that the species is not being tracked.
 #	+trackers ([int]) = array of size num_tracked that store the indices of the particles as stored in positions.
+#Methods:
+#       +saveParticlesTXT(): string, string, [double,double] = This method return the arrays of particles positions and velocities.
+#           names refers to the two attributes being stored, and data stores 'current_n', 'pos_dim' and 'vel_dim'.
 class Particles(object):
     def __init__(self, n_max_n, n_pos_dim, n_vel_dim, num_tracked):
         self.current_n = numpy.uint32(0)
