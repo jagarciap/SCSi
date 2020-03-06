@@ -47,8 +47,8 @@ class System(object):
         self.at['part_solver'] = Leap_Frog(self.at['pic'])
         self.at['electrons'] = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
         self.at['protons'] = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
-        self.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 1, c.DIM, c.DIM, self.at['mesh'].nPoints, 0, "1"
-        self.at['e_field'] = Constant_Electric_Field(self.at['pic'], c.DIM)
+        self.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 1, c.DIM, c.DIM, self.at['mesh'].nPoints, 0, "1")
+        self.at['e_field'] = Electrostatic_2D_rm(self.at['pic'], c.DIM)
 
     def arrangePickle(self):
         return ('ts', 'e_field', 'electrons', 'protons', 'user', 'part_solver')
@@ -59,9 +59,8 @@ class System(object):
     def arrangeParticlesTXT(self):
         return ('ts', 'electrons', 'protons', 'user')
 
-#Initialization of the system and the previous step
+#Initialization of the system
 system = System()
-old_system = copy.deepcopy(system)
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Initial condition
@@ -78,18 +77,21 @@ if sys.argv[1] == '1':
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
-    filename = 'ts01990.vtr'
+    filename = 'ts00090.vtr'
     out.loadVTK(filename, system.at['mesh'], system.at, system.arrangeVTK())
     system.at['e_field'] = Electrostatic_2D_rm(system.at['pic'], c.DIM)
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
-    filename = 'sys_ts=57_2020-02-14_17h34m.pkl'
+    filename = 'sys_ts=932_2020-03-04_20h23m.pkl'
     out.loadPickle(filename, system.at, system.arrangePickle())
 
 else:
     raise("Somehing is wrong here")
 
+#Initialization of the previous step
+old_system = copy.deepcopy(system)
+pdb.set_trace()
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Set up of the system before the Main loop
@@ -100,17 +102,19 @@ else:
 e_n = c.E_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_e_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),c.DIM))
 thermal_e_vel = c.E_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
-drift_e_vel[:,0] += c.E_V_SW
+#drift_e_vel[:,0] += c.E_V_SW
 #Protons
 p_n = c.P_N*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 drift_p_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),c.DIM))
 thermal_p_vel = c.P_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
-drift_p_vel[:,0] += c.P_V_SW
+#drift_p_vel[:,0] += c.P_V_SW
 #User defined
-vel = numpy.zeros((1,2))
-pos = numpy.zeros((1,2))
-pos[0,0] = 1.0
+system.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 100, c.DIM, c.DIM, system.at['mesh'].nPoints, 0, "1")
+vel = numpy.zeros((100,2))
+pos = numpy.zeros((100,2))
+pos[:,0] = 1.0
 system.at['mesh'].boundaries[0].addParticles(system.at['user'], pos, vel)
+system.at['part_solver'].updateMeshValues(system.at['user'])
 
 for boundary in system.at['mesh'].boundaries:
     boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
@@ -133,23 +137,23 @@ try:
         for te in range(c.ELECTRON_TS):
             print('te = ', te)
             system.at['e_field'].computeField([system.at['protons'], system.at['electrons'], system.at['user']])
-            system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'])
+            system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'], extent = 1)
             # Applying field borders and injecting at['electrons']
             for boundary in system.at['mesh'].boundaries:
                 boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
     
         #Proton motion
-        system.at['part_solver'].advance(system.at['protons'], system.at['e_field'])
+        system.at['part_solver'].advance(system.at['protons'], system.at['e_field'], extent = 1)
         for boundary in system.at['mesh'].boundaries:
             boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
     
         #Output vtk
         if system.at['ts']%10 == 0:
-            out.saveVTK(system.at['mesh'], system.at, system.arrangeVTK())
+            out.saveVTK(system.at['mesh'], old_system.at, system.arrangeVTK())
         if system.at['ts']%20 == 0:
-            out.saveParticlesTXT(system.at, system.arrangeParticlesTXT())
+            out.saveParticlesTXT(old_system.at, system.arrangeParticlesTXT())
         if system.at['ts']%1 == 0:
-            out.particleTracker(system.at['ts'], system.at['protons'], system.at['electrons'])
+            out.particleTracker(old_system.at['ts'], old_system.at['protons'], old_system.at['electrons'])
     
         #Updating previous state
         old_system = copy.deepcopy(system)

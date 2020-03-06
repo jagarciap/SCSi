@@ -1,3 +1,4 @@
+import copy
 import numpy
 import pdb
 
@@ -57,14 +58,24 @@ class Leap_Frog(Motion_Solver):
         species.part_values.velocity[:species.part_values.current_n,:] -= species.q_over_m*species.dt/2*field.fieldAtParticles(species.part_values.position[:species.part_values.current_n])
 
 #	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
-    def advance(self, species, fields):
+#           Extent is a karg for updateMeshValues().
+    def advance(self, species, fields, extent = 0):
         self.updateParticles(species, fields)
-        self.updateMeshValues(species)
+        self.updateMeshValues(species, extent)
 
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
-    def updateMeshValues(self, species):
-        if species.name == "Electron - Solar wind" or species.name == "Proton - Solar wind":
+#           Extent can be '0' indicating that every attribute of mesh_values is updated, '1' indicating that only necessary attributes are updated, and 
+#           '2' indicating that the 'non-necessary' attributes are the only ones updated. Notice that the criteria between 'necessary' and 'non-necessary'
+#           attributes will change with the type of phenomena being included.
+    def updateMeshValues(self, species, extent = 0):
+        #if species.name == "Electron - Solar wind" or species.name == "Proton - Solar wind":
+        if extent == 0:
             self.pic.scatterDensity(species)
+            self.pic.scatterSpeed(species)
+            self.pic.scatterTemperature(species)
+        elif extent == 1:
+            self.pic.scatterDensity(species)
+        elif extent == 2:
             self.pic.scatterSpeed(species)
             self.pic.scatterTemperature(species)
 
@@ -74,3 +85,8 @@ class Leap_Frog(Motion_Solver):
         species.part_values.velocity[:np,:] += species.q_over_m*species.dt*field.fieldAtParticles(species.part_values.position[:np,:])
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
         self.pic.mesh.boundaries[0].applyParticleBoundary(species)
+
+    def motionTreatment(key, old_dic, new_dic):
+        temp = copy.deepcopy(old_dic[key])
+
+        return temp

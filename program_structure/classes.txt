@@ -118,6 +118,8 @@ Notes:
            The process is handled through Particles_In_Mesh.
        +loadVTK(Mesh mesh, output) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
            The process is handled through Particles_In_Mesh.
+       +saveParticlesTXT() String, String, [double, double] = Return the array containing Particle attributes of the species.
+           species_data contains, besides attributes being stored, the name of the species.
 
 --------------------------------------------
 
@@ -171,6 +173,14 @@ Attributes:
 
 --------------------------------------------
 
+User_Defined (Inherits from Species):
+
+Definition = Species that serves as dummy species for test porpuses.
+Attributes:
+	+Species attributes.
+
+--------------------------------------------
+
 Particles_In_Mesh (Abstract)(Composition with Species):
 
 Definition = Store values of distributions in the mesh related with particles. It wraps all the attributes that all particles must have.
@@ -182,6 +192,8 @@ Attributes:
 Methods:
 	+saveVTK(Mesh mesh, string name): dictionary = Return the attributes of the Species to be printed in the VTK file.
 	+loadVTK(Mesh mesh, output, string name) = Takes information of the species from a VTK file through 'output' and stores it in the corresponding attributes.
+    saveParticlesTXT(): string, string, [double,double] = This method return the arrays of particles positions and velocities.
+        names refers to the two attributes being stored, and data stores 'current_n', 'pos_dim' and 'vel_dim'.
 
 
 --------------------------------------------

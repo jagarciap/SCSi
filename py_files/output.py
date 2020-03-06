@@ -1,13 +1,13 @@
 # File in charge of printing
-import os
-import copy
 from datetime import datetime
-import motion
 import pyevtk.hl as vtk
 import numpy
-import pickle
-import constants as c
+import os
 import pdb
+import pickle
+
+import constants as c
+import motion
 
 #       +Method that prepares the system to be printed in a '.vtk' file.
 #       +It receives in args[0] the timestep, and the rest of args are objects with functions saveVTK that provide dictionaries of the attributes to be stored in the file.
@@ -115,5 +115,3 @@ def saveParticlesTXT(sys_dic, keys):
     second_row = '\t'.join(attributes)
     nHeader = first_row+'\n'+second_row
     numpy.savetxt(filename, arrays, fmt = '%+.6e', delimiter = '\t', header = nHeader)
-
-

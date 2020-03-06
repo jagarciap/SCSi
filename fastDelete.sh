@@ -1,4 +1,4 @@
 rm ./results/*
-rm ./tests_results/*
+rm ./results_particles/*
 rm ./particle_tracker/*
 rm ./previous_executions/*
