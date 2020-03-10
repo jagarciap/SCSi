@@ -11,7 +11,7 @@ EV_TO_K=11604.525        # 1eV in Kelvin
 g = 9.80665 #Gravity on Earth surface
 
 #Simulation time's parameters
-NUM_TS = numpy.int(2e3)   #Number of total steps in the system
+NUM_TS = numpy.int(4e3)   #Number of total steps in the system
 P_DT= 5e-8            # time step size
 E_DT = 5e-9        # time step for electron dynamics
 ELECTRON_TS = 10   #Internal iterations for electron dynamics

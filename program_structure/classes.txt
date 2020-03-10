@@ -353,15 +353,24 @@ Leap_Frog(Inherits from Motion_Solver):
 
 Definition = Implementation of Leap_Frog method. This method, as being more specific, is more dependant on the current situation of each simulation. As such it has to
                be updated or new classes has to be created if the situation varies.
+
 Attributes: 
 	+type (string) = "Leap Frog"
-    +pic_slv (PIC) = PIC solver. For this class specific methods not provided by PIC super class are used.
+    +pic (PIC) = PIC solver. For this class specific methods not provided by PIC super class are used.
+    +vel_dic {String : [double,double]} = Is a dictionary containing the new values of velocities for every species. The key 'String' is the actual name of the species.
 Methods:
 	+initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
-	    it also takes care of the first update of Particle values in mesh. So far just E, so [Field]->Field.
+	    So far just E, so [Field]->Field.
 	+rewindVelocity(species, field) = Take the velocity of particles half a step back in time for 'field' electric field.
+	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
+		Extent is a karg for updateMeshValues().
 	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
+	    Extent can be '0' indicating that every attribute of mesh_values is updated, '1' indicating that only necessary attributes are updated, and 
+	    '2' indicating that the 'non-necessary' attributes are the only ones updated. Notice that the criteria between 'necessary' and 'non-necessary'
+	    attributes will change with the type of phenomena being included.
 	+updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
+	+motionTreatment(Species species) = It takes the velocities array in the species.part_values atribute and average it with the velocities stored in vel_dic for the particular species.
+		That is, to synchronize velocity with position.
 	+Motion_Solver methods.
 
 ---------------------------------------------------------------------------------------------------------------------------------------

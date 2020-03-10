@@ -44,11 +44,13 @@ class System(object):
         self.at['ts'] = 0
         self.at['mesh'] = Mesh_2D_rm(c.XMIN, c.XMAX, c.YMIN, c.YMAX, c.NX, c.NY, c.DEPTH)
         self.at['pic'] = PIC_2D_rm1o(self.at['mesh'])
-        self.at['part_solver'] = Leap_Frog(self.at['pic'])
         self.at['electrons'] = Electron_SW(0.0, c.E_SPWT, c.E_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
         self.at['protons'] = Proton_SW(0.0, c.P_SPWT, c.P_SIZE, c.DIM, c.DIM, self.at['mesh'].nPoints, c.NUM_TRACKED)
         self.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 1, c.DIM, c.DIM, self.at['mesh'].nPoints, 0, "1")
         self.at['e_field'] = Electrostatic_2D_rm(self.at['pic'], c.DIM)
+        self.at['part_solver'] = Leap_Frog(self.at['pic'], [self.at['electrons'].name, self.at['protons'].name],\
+                [self.at['electrons'].part_values.max_n, self.at['protons'].part_values.max_n],\
+                [self.at['electrons'].vel_dim, self.at['protons'].vel_dim])
 
     def arrangePickle(self):
         return ('ts', 'e_field', 'electrons', 'protons', 'user', 'part_solver')
@@ -73,25 +75,29 @@ system = System()
 # 3: Execution from a Pickle file.
 
 if sys.argv[1] == '1':
-    pass
+    system.at['part_solver'].initialConfiguration(system.at['electrons'], system.at['Field'])
+    system.at['part_solver'].initialConfiguration(system.at['protons'], system.at['Field'])
 
 elif sys.argv[1] == '2':
     #File to be used as source of initial condition
     filename = 'ts00090.vtr'
     out.loadVTK(filename, system.at['mesh'], system.at, system.arrangeVTK())
-    system.at['e_field'] = Electrostatic_2D_rm(system.at['pic'], c.DIM)
+    system.at['part_solver'].initialConfiguration(system.at['electrons'], system.at['Field'])
+    system.at['part_solver'].initialConfiguration(system.at['protons'], system.at['Field'])
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
-    filename = 'sys_ts=932_2020-03-04_20h23m.pkl'
+    filename = 'sys_ts=2000_2020-03-06_21h05m.pkl'
     out.loadPickle(filename, system.at, system.arrangePickle())
+    system.at['part_solver'] = Leap_Frog(system.at['pic'], [system.at['electrons'].name, system.at['protons'].name],\
+            [system.at['electrons'].part_values.max_n, system.at['protons'].part_values.max_n],\
+            [system.at['electrons'].vel_dim, system.at['protons'].vel_dim])
 
 else:
     raise("Somehing is wrong here")
 
 #Initialization of the previous step
 old_system = copy.deepcopy(system)
-pdb.set_trace()
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Set up of the system before the Main loop
@@ -114,15 +120,15 @@ vel = numpy.zeros((100,2))
 pos = numpy.zeros((100,2))
 pos[:,0] = 1.0
 system.at['mesh'].boundaries[0].addParticles(system.at['user'], pos, vel)
-system.at['part_solver'].updateMeshValues(system.at['user'])
+system.at['part_solver'].updateMeshValues(system.at['user'], extent = 1)
 
 for boundary in system.at['mesh'].boundaries:
     boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)
     boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['protons'], p_n, thermal_p_vel, drift_p_vel)
 
 #Update of mesh values
-system.at['part_solver'].updateMeshValues(system.at['protons'])
-system.at['part_solver'].updateMeshValues(system.at['electrons'])
+system.at['part_solver'].updateMeshValues(system.at['protons'], extent = 1)
+system.at['part_solver'].updateMeshValues(system.at['electrons'], extent = 1)
 
 ## ---------------------------------------------------------------------------------------------------------------
 # Main loop
@@ -149,6 +155,8 @@ try:
     
         #Output vtk
         if system.at['ts']%10 == 0:
+            system.at['part_solver'].updateMeshValues(old_system.at['electrons'], extent = 2)
+            system.at['part_solver'].updateMeshValues(old_system.at['protons'], extent = 2)
             out.saveVTK(system.at['mesh'], old_system.at, system.arrangeVTK())
         if system.at['ts']%20 == 0:
             out.saveParticlesTXT(old_system.at, system.arrangeParticlesTXT())

@@ -38,15 +38,28 @@ class Motion_Solver(object):
 #Attributes: 
 #	+type (string) = "Leap Frog"
 #       +pic (PIC) = PIC solver. For this class specific methods not provided by PIC super class are used.
+#       +vel_dic {String : [double,double]} = Is a dictionary containing the new values of velocities for every species. The key 'String' is the actual name of the species.
 #Methods:
 #       +initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
-#           it also takes care of the first update of Particle values in mesh. So far just E, so [Field]->Field.
+#           So far just E, so [Field]->Field.
 #       +rewindVelocity(species, field) = Take the velocity of particles half a step back in time for 'field' electric field.
+#	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
+#           Extent is a karg for updateMeshValues().
+#	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
+#           Extent can be '0' indicating that every attribute of mesh_values is updated, '1' indicating that only necessary attributes are updated, and 
+#           '2' indicating that the 'non-necessary' attributes are the only ones updated. Notice that the criteria between 'necessary' and 'non-necessary'
+#           attributes will change with the type of phenomena being included.
 #       +updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
+#       +motionTreatment(Species species) = It takes the velocities array in the species.part_values atribute and average it with the velocities stored in vel_dic for the particular species.
+#           That is, to synchronize velocity with position.
 #	+Motion_Solver methods.
 class Leap_Frog(Motion_Solver):
-    def __init__(self, pic_slv):
+    def __init__(self, pic_slv, species_names, max_n, vel_dim):
         super().__init__(pic_slv)
+        self.type = "Leap Frog"
+        self.vel_dic = {}
+        for i in range(len(species_names)):
+            self.vel_dic[species_names[i]] = numpy.array((max_n[i], vel_dim[i]))
 
 #       +initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
 #           So far just E, so [Field]->Field.
@@ -71,11 +84,13 @@ class Leap_Frog(Motion_Solver):
         #if species.name == "Electron - Solar wind" or species.name == "Proton - Solar wind":
         if extent == 0:
             self.pic.scatterDensity(species)
+            self.motionTreatment(species)
             self.pic.scatterSpeed(species)
             self.pic.scatterTemperature(species)
         elif extent == 1:
             self.pic.scatterDensity(species)
         elif extent == 2:
+            self.motionTreatment(species)
             self.pic.scatterSpeed(species)
             self.pic.scatterTemperature(species)
 
@@ -84,9 +99,12 @@ class Leap_Frog(Motion_Solver):
         np = species.part_values.current_n
         species.part_values.velocity[:np,:] += species.q_over_m*species.dt*field.fieldAtParticles(species.part_values.position[:np,:])
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
-        self.pic.mesh.boundaries[0].applyParticleBoundary(species)
+        self.vel_dic[species.name] = copy.copy(species.part_values.velocity)
+        for boundary in self.pic.mesh.boundaries:
+            boundary.applyParticleBoundary(species)
 
-    def motionTreatment(key, old_dic, new_dic):
-        temp = copy.deepcopy(old_dic[key])
-
-        return temp
+#       +motionTreatment(Species species) = It takes the velocities array in the species.part_values atribute and average it with the velocities stored in vel_dic for the particular species.
+#           That is, to synchronize velocity with position.
+    def motionTreatment(self, species):
+        species.part_values.velocity[:species.part_values.current_n,:] = (species.part_values.velocity[:species.part_values.current_n,:]+\
+                self.vel_dic[species.name][:species.part_values.current_n,:])/2
