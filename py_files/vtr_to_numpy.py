@@ -17,7 +17,9 @@ def vtrToNumpy(mesh, filenames, names):
     reader.Update()
     output = reader.GetOutput()
     for name in names:
-        arrays.append(mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name)))[:,None])
+        temp = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(name)))
+        temp = numpy.expand_dims(temp, axis = temp.ndim)
+        arrays.append(temp)
     for filename in filenames[1:]:
         cwd = os.path.split(os.getcwd())[0]
         filename = cwd+'/results/'+filename
@@ -26,7 +28,9 @@ def vtrToNumpy(mesh, filenames, names):
         reader.Update()
         output = reader.GetOutput()
         for i in range(len(names)):
-            arrays[i] = numpy.append(arrays[i],mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(names[i])))[:,None], axis = arrays[i].ndim-1)
+            temp = mesh.reverseVTKOrdering(vtk_to_numpy(output.GetPointData().GetArray(names[i])))
+            temp = numpy.expand_dims(temp, axis = temp.ndim)
+            arrays[i] = numpy.append(arrays[i], temp, axis = arrays[i].ndim-1)
     return arrays
 
 def loadFromResults():

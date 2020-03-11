@@ -87,7 +87,7 @@ elif sys.argv[1] == '2':
 
 elif sys.argv[1] == '3':
     #File to be used as source of initial condition
-    filename = 'sys_ts=2000_2020-03-06_21h05m.pkl'
+    filename = 'sys_ts=3239_2020-03-11_08h52m.pkl'
     out.loadPickle(filename, system.at, system.arrangePickle())
     system.at['part_solver'] = Leap_Frog(system.at['pic'], [system.at['electrons'].name, system.at['protons'].name],\
             [system.at['electrons'].part_values.max_n, system.at['protons'].part_values.max_n],\
@@ -115,9 +115,9 @@ drift_p_vel = numpy.zeros((len(system.at['pic'].mesh.boundaries[0].location),c.D
 thermal_p_vel = c.P_V_TH*numpy.ones((len(system.at['pic'].mesh.boundaries[0].location)))
 #drift_p_vel[:,0] += c.P_V_SW
 #User defined
-system.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 100, c.DIM, c.DIM, system.at['mesh'].nPoints, 0, "1")
-vel = numpy.zeros((100,2))
-pos = numpy.zeros((100,2))
+system.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 10000, c.DIM, c.DIM, system.at['mesh'].nPoints, 0, "1")
+vel = numpy.zeros((10000,2))
+pos = numpy.zeros((10000,2))
 pos[:,0] = 1.0
 system.at['mesh'].boundaries[0].addParticles(system.at['user'], pos, vel)
 system.at['part_solver'].updateMeshValues(system.at['user'], extent = 1)
@@ -143,7 +143,10 @@ try:
         for te in range(c.ELECTRON_TS):
             print('te = ', te)
             system.at['e_field'].computeField([system.at['protons'], system.at['electrons'], system.at['user']])
-            system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'], extent = 1)
+            if te == 0:
+                system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'], extent = 1)
+            else:
+                system.at['part_solver'].advance(system.at['electrons'], system.at['e_field'], extent = 1, update_dic = 0)
             # Applying field borders and injecting at['electrons']
             for boundary in system.at['mesh'].boundaries:
                 boundary.injectParticlesDummyBox(boundary.location, system.at['part_solver'], system.at['e_field'], system.at['electrons'], e_n, thermal_e_vel, drift_e_vel)

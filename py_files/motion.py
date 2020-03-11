@@ -71,9 +71,10 @@ class Leap_Frog(Motion_Solver):
         species.part_values.velocity[:species.part_values.current_n,:] -= species.q_over_m*species.dt/2*field.fieldAtParticles(species.part_values.position[:species.part_values.current_n])
 
 #	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
-#           Extent is a karg for updateMeshValues().
-    def advance(self, species, fields, extent = 0):
-        self.updateParticles(species, fields)
+#           extent is a karg for updateMeshValues().
+#           update_dic is a karg for updateParticles(). 
+    def advance(self, species, fields, extent = 0, update_dic = 1):
+        self.updateParticles(species, fields, update_dic)
         self.updateMeshValues(species, extent)
 
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
@@ -94,12 +95,14 @@ class Leap_Frog(Motion_Solver):
             self.pic.scatterSpeed(species)
             self.pic.scatterTemperature(species)
 
-#       +updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
-    def updateParticles(self, species, field):
+#       +updateParticles(Species, Field, int) = Particle advance in time. So far only E, so [Field]->Field in argument.
+#           If update_dic == 1, the vel_dic entry for the species is updated, otherwise it remains untouched.
+    def updateParticles(self, species, field, update_dic):
         np = species.part_values.current_n
         species.part_values.velocity[:np,:] += species.q_over_m*species.dt*field.fieldAtParticles(species.part_values.position[:np,:])
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
-        self.vel_dic[species.name] = copy.copy(species.part_values.velocity)
+        if update_dic == 1:
+            self.vel_dic[species.name] = copy.copy(species.part_values.velocity)
         for boundary in self.pic.mesh.boundaries:
             boundary.applyParticleBoundary(species)
 
