@@ -195,6 +195,7 @@ class Mesh_2D_rm (Mesh):
         vel += species.mesh_values.velocity[index]
         #Adding particles
         self.boundaries[0].addParticles(species, pos, vel)
+        self.boundaries[0].updateTrackers(species, species.part_values.current_n)
 
 #	+print() = Print a VTK file / Matplotlib visualization of the mesh (points and connections between nodes). Also print volumes.
     def print(self):

@@ -99,8 +99,31 @@ class Electrostatic_2D_rm(Electric_Field):
         self.potential[location] = values
         #Electric field trough Pade 2nd order in the boundaries
         self.field[location, :] = -slv.derive_2D_rm_boundaries(location, self.pic.mesh, self.potential)
-            
 
+#       +Neumann([ind] location, [double] valus) = Set Neumann conditions in the nodes at 'location'.
+#           +values account for the values of the e_field normal to the border.
+#           +Note: The Function doesn't handle the situation of the corners.
+    def neumann(self, location, values):
+        # Variables at hand
+        nx = self.pic.mesh.nx
+        ny = self.pic.mesh.ny
+        dx = self.pic.mesh.dx
+        dy = self.pic.mesh.dy
+        #Field and potential
+        for i in range(len(location)):
+            if location[i] < nx:
+                self.field[location[i],1] = values[i]
+                self.potential[location[i]] = self.field[location[i],1]*dy+self.potential[location[i]+nx]
+            elif location[i] > nx*(ny-1):
+                self.field[location[i],1] = values[i]
+                self.potential[location[i]] = -self.field[location[i],1]*dy+self.potential[location[i]-nx]
+            elif location[i]%nx == 0:
+                self.field[location[i],0] = values[i]
+                self.potential[location[i]] = self.field[location[i],0]*dx+self.potential[location[i]+1]
+            else:
+                self.field[location[i],0] = values[i]
+                self.potential[location[i]] = -self.field[location[i], 0]*dx+self.potential[location[i]-1]
+            
 #Definition = Constant electric field impsoed by the user. Does not change through time.
 #Attributes:
 #	+type (string) = "Electric field - Constant".

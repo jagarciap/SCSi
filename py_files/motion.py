@@ -73,8 +73,10 @@ class Leap_Frog(Motion_Solver):
 #	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
 #           extent is a karg for updateMeshValues().
 #           update_dic is a karg for updateParticles(). 
-    def advance(self, species, fields, extent = 0, update_dic = 1):
-        self.updateParticles(species, fields, update_dic)
+#           type_boundary indicates the type of boundary method to apply to particles. 'open', the default mthod, deletes them. 'reflective' reflects them back to the dominion.
+#           **kwargs may contain arguments necessary for inner methods.
+    def advance(self, species, fields, extent = 0, update_dic = 1, type_boundary = 'open', **kwargs):
+        self.updateParticles(species, fields, update_dic, type_boundary, **kwargs)
         self.updateMeshValues(species, extent)
 
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
@@ -97,14 +99,16 @@ class Leap_Frog(Motion_Solver):
 
 #       +updateParticles(Species, Field, int) = Particle advance in time. So far only E, so [Field]->Field in argument.
 #           If update_dic == 1, the vel_dic entry for the species is updated, otherwise it remains untouched.
-    def updateParticles(self, species, field, update_dic):
+#           type_boundary indicates the type of boundary method to apply to particles. 'open', the default mthod, deletes them. 'reflective' reflects them back to the dominion.
+#           **kwargs may contain arguments necessary for inner methods.
+    def updateParticles(self, species, field, update_dic, type_boundary, **kwargs):
         np = species.part_values.current_n
         species.part_values.velocity[:np,:] += species.q_over_m*species.dt*field.fieldAtParticles(species.part_values.position[:np,:])
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
         if update_dic == 1:
             self.vel_dic[species.name] = copy.copy(species.part_values.velocity)
         for boundary in self.pic.mesh.boundaries:
-            boundary.applyParticleBoundary(species)
+            boundary.applyParticleBoundary(species, type_boundary, **kwargs)
 
 #       +motionTreatment(Species species) = It takes the velocities array in the species.part_values atribute and average it with the velocities stored in vel_dic for the particular species.
 #           That is, to synchronize velocity with position.

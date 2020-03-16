@@ -1,6 +1,5 @@
 # File in charge of printing
 from datetime import datetime
-import pyevtk.hl as vtk
 import numpy
 import os
 import pdb
@@ -45,7 +44,7 @@ def particleTracker(ts, *args):
     # Checking tracking method
     for spc in args:
         if spc.part_values.current_n > spc.part_values.num_tracked and numpy.any(spc.part_values.trackers == spc.part_values.max_n):
-            print("Error in species: ", spc.type)
+            print("Error in species: ", spc.name)
             print(spc.part_values.current_n, spc.part_values.num_tracked)
             pdb.set_trace()
             raise ValueError("There should not be any invalid values")
