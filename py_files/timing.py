@@ -1,4 +1,5 @@
 import functools
+import pdb
 import time
 
 class Timing(object):
@@ -13,6 +14,7 @@ class Timing(object):
         print(self.__class__.count, self.func.__name__)
 
     def __call__(self, *args, **kwargs):
+        pdb.set_trace()
         t0 = time.perf_counter()
         returned = self.func(*args, **kwargs)
         t1 = time.perf_counter()

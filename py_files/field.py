@@ -6,6 +6,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import constants as c
 import mesh as m
 import solver as slv
+from timing import Timing
 
 #Field (Abstract):
 #
@@ -54,7 +55,7 @@ class Field(object):
 class Electric_Field(Field):
     def __init__(self, n_pic, field_dim, n_string):
         self.potential = numpy.zeros((n_pic.mesh.nPoints))
-        super().__init__("Electric"+n_string,n_pic, field_dim)
+        super().__init__("Electric"+n_string, n_pic, field_dim)
 
     def computeField(self, species):
         pass
@@ -73,7 +74,7 @@ class Electric_Field(Field):
 #
 #Definition = Electric field for a 2D rectangular mesh, detached from the magnetic field. Uses methods from "solver.py" to calculate electric potential, and then electric field.
 #Attributes:
-#	+type (string) = "Electric field - Electrostatic_2D_rm".
+#	+type (string) = "Electric - Electrostatic_2D_rm".
 #	+Elctric_Field attributes.
 #Methods:
 #	+Electric_Field methods.
@@ -81,6 +82,7 @@ class Electrostatic_2D_rm(Electric_Field):
     def __init__(self, n_pic, field_dim):
         super().__init__(n_pic, field_dim, " - Electrostatic_2D_rm")
 
+    @Timing
     def computeField(self, species):
         #Prepare the right-hand-side of the Poisson equation 
         rho = numpy.zeros_like(species[0].mesh_values.density)
@@ -148,7 +150,21 @@ class Constant_Electric_Field(Electric_Field):
 #	+Field methods.
 class Magnetic_Field(Field):
     def __init__(self, n_pic, field_dim, n_string):
-        super.__init__("Magnetic"+n_string,n_pic, n_boundaries, n_points, field_dim)
+        super().__init__("Magnetic"+n_string, n_pic, field_dim)
+
+    def computeField(self, species):
+        pass
+
+#Definition = Constant Magnetic field impsoed by the user. Does not change through time. It works as a perpendicular field to the 2D dominion of the electric field and particular. Thus, field_dim = 1.
+#Attributes:
+#	+type (string) = "Electric - Constant".
+#	+Magnetic_Field attributes.
+#Methods:
+#	+Magnetic_Field methods.
+class Constant_Magnetic_Field(Magnetic_Field):
+    def __init__(self, n_pic, field_dim):
+        super().__init__(n_pic, field_dim, " - Constant")
+        self.field += c.B_STRENGTH
 
     def computeField(self, species):
         pass

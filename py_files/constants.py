@@ -11,19 +11,19 @@ EV_TO_K=11604.525        # 1eV in Kelvin
 g = 9.80665 #Gravity on Earth surface
 
 #Simulation time's parameters
-NUM_TS = numpy.int(4e3)   #Number of total steps in the system
-P_DT= 5e-8            # time step size
-E_DT = 5e-9        # time step for electron dynamics
+NUM_TS = numpy.int(2e3)   #Number of total steps in the system
+P_DT= 5e-7#5e-8            # time step size
+E_DT = 5e-8#5e-9        # time step for electron dynamics
 ELECTRON_TS = 10   #Internal iterations for electron dynamics
 
 #Geometrical parameters for a rectangular outer boundary
 XMIN = 0.0
-XMAX = 2.0#5.0
-YMIN = -1.0#-205
-YMAX = 1.0#2.5
+XMAX = 100.0#5.0
+YMIN = -50.0#-205
+YMAX = 50.0#2.5
 DEPTH = 1.0
-NX = numpy.uint16(41)#10
-NY = numpy.uint16(41)#10
+NX = numpy.uint16(21)#10
+NY = numpy.uint16(21)#10
 
 #Particle physical parameters
 E_N = 7e9
@@ -37,11 +37,15 @@ P_V_TH = numpy.sqrt(2*K*P_T/MP)
 P_V_SW = 300e3
 
 #Particle simulation parameters
-P_SIZE = numpy.uint32(1e5)     #Size of the ions array
-E_SIZE = numpy.uint32(1e5)     #Size of the electrons array
-P_SPWT = 4e5#5e6
-E_SPWT = 4e5#5e6
+P_SIZE = numpy.uint32(5e4)     #Size of the ions array
+E_SIZE = numpy.uint32(5e4)     #Size of the electrons array
+P_SPWT = 3.5e9#5e6
+E_SPWT = 3.5e9#5e6
 
 #Number of particles traced
 NUM_TRACKED = 100
 DIM = numpy.uint8(2)
+
+#Magnetic field
+B_STRENGTH = 2e-6
+B_DIM = 1

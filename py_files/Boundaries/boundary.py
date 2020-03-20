@@ -7,6 +7,7 @@ import numpy
 import pdb
 
 from Species.species import Species
+from timing import Timing
 
 #Boundary (Abstract-like: will also have common methods that can be used by sub-classes. In composition with mesh):
 #
@@ -187,6 +188,7 @@ class Boundary(object):
 #       +injectParticlesDummyBox([int] location, PIC pic, Field field, Species species, [double] delta_n, [double] n_vel, [double] shift_vel) = 
 #               Inject the particles in location indices by creating dummy boxes around them, creating particles
 #       	inside of them, moving the particles, and then adding the ones that entered into the computational domain.
+    @Timing
     def injectParticlesDummyBox(self, location, part_solver, field, species, delta_n, n_vel, shift_vel):
         # Creating temporary species
         ghost = Species("temporary species", species.dt, species.q, species.m, species.debye, species.spwt, int(species.part_values.max_n/10), species.pos_dim, species.vel_dim, species.mesh_values.nPoints)

@@ -7,10 +7,12 @@ import pickle
 
 import constants as c
 import motion
+from timing import Timing
 
 #       +Method that prepares the system to be printed in a '.vtk' file.
 #       +It receives in args[0] the timestep, and the rest of args are objects with functions saveVTK that provide dictionaries of the attributes to be stored in the file.
 #       +The actual printing is handled by the mesh.
+@Timing
 def saveVTK(mesh, sys_dic, keys):
     #Preparing file
     cwd = os.path.split(os.getcwd())[0]
@@ -40,6 +42,7 @@ def loadVTK(filename, mesh, sys_dic, keys):
 
 # The function prints a file for a particular timestep 'ts' where the species being tracked are printed. Columns are for each component of each species, so for 2D:
 #   specie1.x \t specie1.y \t specie2.x etc. Each row is a different particle for a particular species.
+@Timing
 def particleTracker(ts, *args):
     # Checking tracking method
     for spc in args:
@@ -88,6 +91,7 @@ def loadPickle(filename, sys_dic, keys):
         for key in keys:
             sys_dic[key] = pickle.load(pinput)
 
+@Timing
 def saveParticlesTXT(sys_dic, keys):
     #Preparing path
     cwd = os.path.split(os.getcwd())[0]
@@ -114,3 +118,19 @@ def saveParticlesTXT(sys_dic, keys):
     second_row = '\t'.join(attributes)
     nHeader = first_row+'\n'+second_row
     numpy.savetxt(filename, arrays, fmt = '%+.6e', delimiter = '\t', header = nHeader)
+
+def saveTimes(ts, dictionary):
+    #File name
+    cwd = os.path.split(os.getcwd())[0]
+    filename = os.path.join(cwd,'results','execution_times.dat')
+    if ts == 1:
+        workFile = open(filename, 'w', buffering = 1) 
+        time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
+        workFile.write('#'+time+'\n')
+        worFile.write('\t'.join(dictionay.keys())+'\n')
+        worFile.write(ts+'\t'+'\t'.join(dictionay.values())+'\n')
+    else:
+        workFile = open(filename, 'a', buffering = 1) 
+        worFile.write(ts+'\t'+'\t'.join(dictionay.values())+'\n')
+    workFile.close()
+
