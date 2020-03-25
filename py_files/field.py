@@ -126,6 +126,8 @@ class Electrostatic_2D_rm(Electric_Field):
                 self.field[location[i],0] = values[i]
                 self.potential[location[i]] = -self.field[location[i], 0]*dx+self.potential[location[i]-1]
             
+#Constant_Electric_Field(Electric_Field):
+#
 #Definition = Constant electric field impsoed by the user. Does not change through time.
 #Attributes:
 #	+type (string) = "Electric field - Constant".
@@ -135,11 +137,31 @@ class Electrostatic_2D_rm(Electric_Field):
 class Constant_Electric_Field(Electric_Field):
     def __init__(self, n_pic, field_dim):
         super().__init__(n_pic, field_dim, " - Constant")
-        self.field[:,0] += 0.0
+        self.field[:,0] += 0.27992
 
     def computeField(self, species):
         pass
         
+#Time_Electric_Field(Electric_Field):
+#
+#Definition = Electric field dependent on time.
+#Attributes:
+#	+type (string) = "Electric field - Constant".
+#	+Electric_Field attributes.
+#Methods:
+#	+Electric_Field methods.
+#       +computeField(Species species, int p_step, int e_step = 0) = Recieves the steps in the simulation and computes the time from the start of the execution. Then, updates the field accordingly
+#           with this and any function imposed by the user inside of this method.
+class Time_Electric_Field(Electric_Field):
+    def __init__(self, n_pic, field_dim):
+        super().__init__(n_pic, field_dim, " - Constant")
+        #Initial electric field
+        self.field[:,0] += 0.27992
+
+    def computeField(self, species, p_step, e_step = 0):
+        time = p_step*c.P_DT+e_step*c.E_DT
+        gradient = 98.4658
+        self.field[:,0] = 0.27992+gradient*time
 
 #Magnetic_Field (Inherits from Field):
 #
@@ -155,6 +177,8 @@ class Magnetic_Field(Field):
     def computeField(self, species):
         pass
 
+#Constant_Magnetic_Field(Inherits from Magnetic_Field):
+#
 #Definition = Constant Magnetic field impsoed by the user. Does not change through time. It works as a perpendicular field to the 2D dominion of the electric field and particular. Thus, field_dim = 1.
 #Attributes:
 #	+type (string) = "Electric - Constant".

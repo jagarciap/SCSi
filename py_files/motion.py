@@ -135,13 +135,23 @@ class Leap_Frog(Motion_Solver):
 #       +initialConfiguration(Species, Field) = Make necessary adjustment to the initial configuration of species so as to begin the advancement in time.
 #           So far just E, so [Field]->Field.
 #       +rewindVelocity(species, field) = Take the velocity of particles half a step back in time for 'field' electric field.
-#	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
-#           Extent is a karg for updateMeshValues().
+#	+advance(Species species, [Field] e_fields, [Field] m_fields) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
+#           extent is a karg for updateMeshValues().
+#           update_dic is a karg for updateParticles(). 
+#           type_boundary indicates the type of boundary method to apply to particles. 'open', the default mthod, deletes them. 'reflective' reflects them back to the dominion.
+#           **kwargs may contain arguments necessary for inner methods.
 #	+updateMeshValues(Species) = Update the attributes of Particles_In_Mesh. Particular for each species, so it needs to be updated with every new species.
 #           Extent can be '0' indicating that every attribute of mesh_values is updated, '1' indicating that only necessary attributes are updated, and 
 #           '2' indicating that the 'non-necessary' attributes are the only ones updated. Notice that the criteria between 'necessary' and 'non-necessary'
 #           attributes will change with the type of phenomena being included.
-#       +updateParticles(Species, Field) = Particle advance in time. So far only E, so [Field]->Field in argument.
+#       +updateParticles(Species species, [Field] e_fields, [Field] m_fields, int) = Particle advance in time. The function can receive multiple electric and magnetic fields.
+#           If update_dic == 1, the vel_dic entry for the species is updated, otherwise it remains untouched.
+#           type_boundary indicates the type of boundary method to apply to particles. 'open', the default method, deletes them. 'reflective' reflects them back to the dominion.
+#           **kwargs may contain arguments necessary for inner methods.
+#       +electricAdvance([double,double] e_field, Species species, double dt) = Updates the velocity one 'dt' forward.
+#           Boris (1970) advancement in time. Is the usual Leap-Frog advancement in time.
+#       +magneticRotation (Field B, Species species, double dt) = Update velocity applying magnetic rotation.
+#           Buneman (1973) rotation.
 #       +motionTreatment(Species species) = It takes the velocities array in the species.part_values atribute and average it with the velocities stored in vel_dic for the particular species.
 #           That is, to synchronize velocity with position.
 #	+Motion_Solver methods.
@@ -162,7 +172,7 @@ class Boris_Push(Motion_Solver):
     def rewindVelocity(self, species, field):
         species.part_values.velocity[:species.part_values.current_n,:] -= species.q_over_m*species.dt/2*field.fieldAtParticles(species.part_values.position[:species.part_values.current_n])
 
-#	+advance(Species, [Field]) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
+#	+advance(Species species, [Field] e_fields, [Field] m_fields) = Advance the particles in time. It will treat the particles as well as update the mesh_values.
 #           extent is a karg for updateMeshValues().
 #           update_dic is a karg for updateParticles(). 
 #           type_boundary indicates the type of boundary method to apply to particles. 'open', the default mthod, deletes them. 'reflective' reflects them back to the dominion.
@@ -191,7 +201,7 @@ class Boris_Push(Motion_Solver):
             self.pic.scatterSpeed(species)
             self.pic.scatterTemperature(species)
 
-#       +updateParticles(Species, [Field], int) = Particle advance in time. So far only one E and B.
+#       +updateParticles(Species species, [Field] e_fields, [Field] m_fields, int) = Particle advance in time. The function can receive multiple electric and magnetic fields.
 #           If update_dic == 1, the vel_dic entry for the species is updated, otherwise it remains untouched.
 #           type_boundary indicates the type of boundary method to apply to particles. 'open', the default method, deletes them. 'reflective' reflects them back to the dominion.
 #           **kwargs may contain arguments necessary for inner methods.
@@ -200,13 +210,13 @@ class Boris_Push(Motion_Solver):
         #Summing over the different fields
         e_total = copy.deepcopy(e_fields[0])
         m_total = copy.deepcopy(m_fields[0])
-        e_total.field = reduce(lambda x,y : x.field + y.field, e_fields)
-        m_total.field = reduce(lambda x,y : x.field + y.field, m_fields)
+        e_total.field = reduce(lambda x,y : x.field + y.field, e_fields).field
+        m_total.field = reduce(lambda x,y : x.field + y.field, m_fields).field
         #Updating velocity
         np = species.part_values.current_n
-        species.part_values.velocity[:np,:] = self.electricAdvance(e_total.fieldAtParticles(species.part_values.position[:np,:]), species, species.dt/2)
-        species.part_values.velocity[:np,:] = self.magneticRotation(b_total.fieldAtParticles(species.part_values.position[:np,:]), species, species.dt)
-        species.part_values.velocity[:np,:] = self.electricAdvance(e_total.fieldAtParticles(species.part_values.position[:np,:]), species, species.dt/2)
+        species.part_values.velocity[:np,:] = self.electricHalfAdvance(e_total.fieldAtParticles(species.part_values.position[:np,:]), species, np)
+        species.part_values.velocity[:np,:] = self.magneticRotation(m_total.fieldAtParticles(species.part_values.position[:np,:]), species, np)
+        species.part_values.velocity[:np,:] = self.electricHalfAdvance(e_total.fieldAtParticles(species.part_values.position[:np,:]), species, np)
         #Updating position         
         species.part_values.position[:np,:] += species.part_values.velocity[:np,:]*species.dt
         if update_dic == 1:
@@ -214,19 +224,19 @@ class Boris_Push(Motion_Solver):
         for boundary in self.pic.mesh.boundaries:
             boundary.applyParticleBoundary(species, type_boundary, **kwargs)
 
-#       +electricAdvance(Field field, Species species, double dt) = Updates the velocity one 'dt' forward.
+#       +electricAdvance([double,double] e_field, Species species, double dt) = Updates the velocity one 'dt' forward.
 #           Boris (1970) advancement in time. Is the usual Leap-Frog advancement in time.
-    def electricAdvance(self, e_field, species, dt):
-        return species.part_values.velocity[:species.part_values.current_n,:]+e_field*species.q_over_m*dt
+    def electricHalfAdvance(self, e_field, species, current_n):
+        return species.part_values.velocity[:current_n,:]+e_field*species.q_over_m*species.dt/2
     
 #       +magneticRotation (Field B, Species species, double dt) = Update velocity applying magnetic rotation.
 #           Buneman (1973) rotation.
-    def magneticRotation (self, B, species, dt):
-        new = numpy.zeros_like(species.part_values.velocity)
-        t = species.q_over_m*B*dt/2
+    def magneticRotation (self, B, species, current_n):
+        new = numpy.zeros_like(species.part_values.velocity[:current_n,:])
+        t = species.q_over_m*B[:,0]*species.dt/2
         sine = 2*t/(1+t*t)
-        v_1 = species.part_values.velocity[:,0] + species.part_values.velocity[:,1]*t
-        new[:,1] = species.part_values.velocity[:,1] - v_1*sine
+        v_1 = species.part_values.velocity[:current_n,0] + species.part_values.velocity[:current_n,1]*t
+        new[:,1] = species.part_values.velocity[:current_n,1] - v_1*sine
         new[:,0] = v_1 + new[:,1]*t
         return new
 

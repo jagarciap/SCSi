@@ -25,26 +25,26 @@ class Outer_2D_Rectangular(Boundary):
         self.ymax = y_max
         self.location = []
 
-#	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument. So far a 0V Dirichlet boundary condition is applied.
-#NOTE: Modifified to add a constant -20V at the right boundary (2020_03_12)
-    def applyElectricBoundary(self, e_field):
-        #Location of dirichlet and neumann boundaries
-        dirichlet_loc_1 = numpy.arange(c.NX-1, c.NX*c.NY, c.NX)
-        neumann_loc = numpy.delete(self.location, numpy.arange(c.NX-1,c.NX+(c.NY-1)*2, 2))
-        dirichlet_loc_2 = numpy.arange(0, c.NX*c.NY, c.NX)
-        #Values
-        dirichlet_val_1 = -20*numpy.ones_like(dirichlet_loc_1)
-        dirichlet_val_2 = numpy.zeros_like(dirichlet_loc_2)
-        neumann_val = numpy.zeros_like(neumann_loc)
-        #Applying values
-        e_field.dirichlet(dirichlet_loc_1, dirichlet_val_1)
-        e_field.dirichlet(dirichlet_loc_2, dirichlet_val_2)
-        e_field.neumann(neumann_loc, neumann_val)
-
 ##	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument. So far a 0V Dirichlet boundary condition is applied.
+##NOTE: Modifified to add a constant -20V at the right boundary (2020_03_12)
 #    def applyElectricBoundary(self, e_field):
-#        values = numpy.zeros((len(self.location)))
-#        e_field.dirichlet(self.location, values)
+#        #Location of dirichlet and neumann boundaries
+#        dirichlet_loc_1 = numpy.arange(c.NX-1, c.NX*c.NY, c.NX)
+#        neumann_loc = numpy.delete(self.location, numpy.arange(c.NX-1,c.NX+(c.NY-1)*2, 2))
+#        dirichlet_loc_2 = numpy.arange(0, c.NX*c.NY, c.NX)
+#        #Values
+#        dirichlet_val_1 = -20*numpy.ones_like(dirichlet_loc_1)
+#        dirichlet_val_2 = numpy.zeros_like(dirichlet_loc_2)
+#        neumann_val = numpy.zeros_like(neumann_loc)
+#        #Applying values
+#        e_field.dirichlet(dirichlet_loc_1, dirichlet_val_1)
+#        e_field.dirichlet(dirichlet_loc_2, dirichlet_val_2)
+#        e_field.neumann(neumann_loc, neumann_val)
+
+#	+applyElectricBoundary(Electric_Field) = Applies the boundary condition to the electric field passed as argument. So far a 0V Dirichlet boundary condition is applied.
+    def applyElectricBoundary(self, e_field):
+        values = numpy.zeros((len(self.location)))
+        e_field.dirichlet(self.location, values)
 
 #	+applyMagneticBoundary(Magnetic_Field) = Applies the boundary condition to the magnetic field passed as argument.
 #       No magnetic field so far

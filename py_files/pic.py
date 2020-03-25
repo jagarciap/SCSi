@@ -130,8 +130,8 @@ class PIC_2D_rm1o(PIC):
         dj = mc[:,1] - index[:,1]
 
         #NOTE: Maybe this can be further optmized later
-        di = numpy.repeat(di[:,None], 2, axis = 1)
-        dj = numpy.repeat(dj[:,None], 2, axis = 1)
+        di = numpy.repeat(di[:,None], numpy.shape(field)[1], axis = 1)
+        dj = numpy.repeat(dj[:,None], numpy.shape(field)[1], axis = 1)
 
         #From mesh to particles, summing in every dimension through different columns
         values += field[array,:]*(1-di)*(1-dj)

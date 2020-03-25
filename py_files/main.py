@@ -13,7 +13,7 @@ from Species.proton import Proton_SW
 from Species.electron import Electron_SW
 from Species.user_defined import User_Defined
 from pic import PIC_2D_rm1o
-from motion import Leap_Frog
+from motion import Boris_Push
 import output as out
 from timing import Timing
 
@@ -51,7 +51,7 @@ class System(object):
         #self.at['user'] = User_Defined(c.P_DT, -c.QE, c.MP, 0, c.P_SPWT, 1, c.DIM, c.DIM, self.at['mesh'].nPoints, 0, "1")
         self.at['e_field'] = Electrostatic_2D_rm(self.at['pic'], c.DIM)
         self.at['m_field'] = Constant_Magnetic_Field(self.at['pic'], c.B_DIM)
-        self.at['part_solver'] = Leap_Frog(self.at['pic'], [self.at['electrons'].name, self.at['protons'].name],\
+        self.at['part_solver'] = Boris_Push(self.at['pic'], [self.at['electrons'].name, self.at['protons'].name],\
                 [self.at['electrons'].part_values.max_n, self.at['protons'].part_values.max_n],\
                 [self.at['electrons'].vel_dim, self.at['protons'].vel_dim])
 
@@ -179,9 +179,10 @@ try:
     
         #Execution time of loop step and storage
         t1 = time.perf_counter()
-        getattr(Timing, 'dict_list')['Global'] = t1-t0
+        getattr(Timing, 'time_dict')['Global'] = t1-t0
         if system.at['ts']%10 == 0:
-            out.saveTimes(system.at['ts'], getattr(Timing, 'dict_list'))
+            out.saveTimes(system.at['ts'], getattr(Timing, 'time_dict'))
+        Timing.reset_dict()
 
         #Advance in timestep
         system.at['ts'] += 1

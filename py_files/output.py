@@ -91,6 +91,9 @@ def loadPickle(filename, sys_dic, keys):
         for key in keys:
             sys_dic[key] = pickle.load(pinput)
 
+#       +saveParticlesTXT(dict sys_dic, [String] keys) = Stores the values of positions and velocities of the different species at a certain time.
+#           The file is created with the format "ts{step number}.dat" and stores the information in columns as:
+#           columns for position, followed by columns for velocity, one of these blocks for each species, ordered in alphabetical order.
 @Timing
 def saveParticlesTXT(sys_dic, keys):
     #Preparing path
@@ -119,18 +122,21 @@ def saveParticlesTXT(sys_dic, keys):
     nHeader = first_row+'\n'+second_row
     numpy.savetxt(filename, arrays, fmt = '%+.6e', delimiter = '\t', header = nHeader)
 
+
+#       +saveTimes(int ts, dict dictionary) = Stores execution times in a file. If it is the first step in the simulation, the file is created. Otherwise,
+#           values are appended at the end of the file.
 def saveTimes(ts, dictionary):
     #File name
     cwd = os.path.split(os.getcwd())[0]
     filename = os.path.join(cwd,'results','execution_times.dat')
-    if ts == 1:
+    if ts == 0:
         workFile = open(filename, 'w', buffering = 1) 
         time = datetime.now().strftime('%Y-%m-%d_%Hh%Mm')
         workFile.write('#'+time+'\n')
-        worFile.write('\t'.join(dictionay.keys())+'\n')
-        worFile.write(ts+'\t'+'\t'.join(dictionay.values())+'\n')
+        workFile.write('#'+'\t'.join(dictionary.keys())+'\n')
+        workFile.write('{:d}'.format(ts)+'\t'+'\t'.join(map( lambda x : '{:.5e}'.format(x), dictionary.values()))+'\n')
     else:
         workFile = open(filename, 'a', buffering = 1) 
-        worFile.write(ts+'\t'+'\t'.join(dictionay.values())+'\n')
+        workFile.write('{:d}'.format(ts)+'\t'+'\t'.join(map( lambda x : '{:.5e}'.format(x), dictionary.values()))+'\n')
     workFile.close()
 
